@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 // import 'dart:convert';
-import './blog.dart';
+import './blog/blog.dart';
 import './register.dart';
 
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
@@ -25,6 +26,11 @@ class LoginPageState extends State<LoginPage> {
         data: {'name': _unameController.text, 'password': _pwdController.text});
     // Map<String, dynamic> res = response.data;
     if (response.data['code'] == 0) {
+      var user = response.data['user'];
+      String token = response.data['token'];
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('uid', user['id']);
+      await prefs.setString('token', token);
       Navigator.push(context, MaterialPageRoute(builder: (context) {
         return BlogPage();
       }));
@@ -71,6 +77,7 @@ class LoginPageState extends State<LoginPage> {
                   ),
                   TextFormField(
                     controller: _pwdController,
+                    obscureText: true,
                     decoration: InputDecoration(
                         hintText: '请输入密码',
                         labelText: '密码',

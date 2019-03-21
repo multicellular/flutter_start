@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
-import './blog.dart';
+import './blog/blog.dart';
 import './login.dart';
 // import 'dart:async';
 
@@ -22,11 +22,11 @@ class RegisterPageState extends State<RegisterPage> {
   // GlobalKey _fromKey = new GlobalKey();
   Future<File> _imageFile;
   File avator;
-  void _selectedImage() {
-    setState(() {
-      _imageFile = ImagePicker.pickImage(source: ImageSource.gallery);
-    });
-  }
+  // void _selectedImage() {
+  //   setState(() {
+  //     _imageFile = ImagePicker.pickImage(source: ImageSource.gallery);
+  //   });
+  // }
 
   _signUp() async {
     FormData formData =
@@ -71,6 +71,7 @@ class RegisterPageState extends State<RegisterPage> {
               ),
               TextFormField(
                 controller: _pwdController,
+                // obscureText: true,
                 decoration: InputDecoration(
                     hintText: '请输入密码', labelText: '密码', icon: Icon(Icons.lock)),
               ),
@@ -99,7 +100,34 @@ class RegisterPageState extends State<RegisterPage> {
                             tooltip: '请选择上传头像',
                             iconSize: 80.0,
                             onPressed: () {
-                              _selectedImage();
+                              showModalBottomSheet(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return new Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        new ListTile(
+                                          leading: new Icon(Icons.photo_camera),
+                                          title: new Text("Camera"),
+                                          onTap: () {
+                                            _imageFile = ImagePicker.pickImage(
+                                                source: ImageSource.camera);
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                        new ListTile(
+                                          leading:
+                                              new Icon(Icons.photo_library),
+                                          title: new Text("Gallery"),
+                                          onTap: () {
+                                            _imageFile = ImagePicker.pickImage(
+                                                source: ImageSource.gallery);
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  });
                             },
                           );
                         }
