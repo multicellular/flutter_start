@@ -275,7 +275,7 @@ class PostBlogDialogState extends State<PostBlogDialog> {
           assetEntity: _images[index],
           width: 300,
           height: 200,
-          boxFit: BoxFit.cover,
+          boxFit: BoxFit.contain,
           onPressed: () {
             setState(() {
               // _images
@@ -301,9 +301,9 @@ class PostBlogDialogState extends State<PostBlogDialog> {
             : IconButton(
                 icon: Icon(Icons.videocam),
                 onPressed: () => _pickAsset(PickType.onlyVideo)),
-        // IconButton(
-        //     icon: Icon(Icons.videocam),
-        //     onPressed: () => _testPhotoListParams()),
+        IconButton(
+            icon: Icon(Icons.videocam),
+            onPressed: () => _testPhotoListParams()),
       ],
     );
   }
@@ -817,7 +817,7 @@ class BuildBlog extends StatelessWidget {
         image: NetworkImage(urlPath + image),
         width: 100,
         height: 100,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain
       );
       widgets.add(widget);
     }
@@ -826,7 +826,7 @@ class BuildBlog extends StatelessWidget {
       // crossAxisCount: 3,
       mainAxisSpacing: 2,
       crossAxisSpacing: 2,
-      childAspectRatio: images.length > 2 ? 1 : 1 / 2,
+      childAspectRatio: images.length > 2 ? 1 : 3/2,
       shrinkWrap: true, //增加
       physics: new NeverScrollableScrollPhysics(), //增加
       children: widgets,
