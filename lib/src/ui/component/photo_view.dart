@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 // import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
+// import 'package:cached_network_image/cached_network_image.dart';
+
 class PhotoViewPage extends StatelessWidget {
-  final urlPath = 'http://localhost:3000/';
   final List images;
   final List<PhotoViewGalleryPageOptions> widgets =
       <PhotoViewGalleryPageOptions>[];
   PhotoViewPage(this.images) {
     for (var image in images) {
       PhotoViewGalleryPageOptions widget = PhotoViewGalleryPageOptions(
-        imageProvider: NetworkImage(urlPath + image),
+        imageProvider: NetworkImage(image),
+        // imageProvider: CachedNetworkImageProvider(image),
         heroTag: "tag1",
       );
       widgets.add(widget);

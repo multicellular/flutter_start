@@ -1,14 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../component/photo_view.dart';
 import '../component/video_player.dart';
 
-// Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
+import 'package:photo/photo.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'dart:typed_data';
+
+// import 'package:cached_network_image/cached_network_image.dart';
+
+import '../models/config.dart';
+
+// BaseOptions options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
 Dio dio = new Dio();
 // dio.options.baseUrl = 'localhost:3000/api';
-var urlPath = 'http://localhost:3000/';
+var urlPath = DefaultConfig.urlPath;
+var baseUrl = DefaultConfig.baseUrl;
 
 class BlogPage extends StatefulWidget {
   @override
@@ -20,10 +32,12 @@ class BlogPageState extends State<BlogPage> {
   Response response;
   ScrollController _controller = new ScrollController();
   bool isLoading = false;
+  Duration duration = new Duration(seconds: 1);
+  Timer timer;
 
   _initData() async {
     isLoading = true;
-    response = await dio.get('http://localhost:3000/api/blog/getblogs');
+    response = await dio.get('$baseUrl/blog/getblogs');
     isLoading = false;
     setState(() {
       blogs = response.data['blogs'];
@@ -37,7 +51,10 @@ class BlogPageState extends State<BlogPage> {
     _controller.addListener(() {
       // 顶端下拉刷新数据
       if (_controller.offset <= 0 && !isLoading) {
-        _initData();
+        timer?.cancel();
+        timer = new Timer(duration, () {
+          _initData();
+        });
       }
     });
   }
@@ -204,16 +221,294 @@ class BlogPageState extends State<BlogPage> {
   }
 }
 
-class PostBlogDialog extends StatelessWidget {
+class PostBlogDialog extends StatefulWidget {
+  @override
+  State createState() => PostBlogDialogState();
+}
+
+class PostBlogDialogState extends State<PostBlogDialog> {
+  TextEditingController _contentController = new TextEditingController();
+  List<AssetEntity> _images = [];
+  List<AssetEntity> _videos = [];
+  // String _error = '';
+  List _uploadFiles = [];
+  bool _isPrivate = false;
+
+  _postBlog() async {
+    FormData formData = new FormData.from({'file': _uploadFiles});
+    Response uplaodFile = await dio.post('$baseUrl/uploadFile', data: formData);
+    String mediaUrls = uplaodFile.data['urls'];
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int uid = await prefs.get('uid');
+    Response response = await dio.post('$baseUrl/blog/postblog', data: {
+      // 'title': '',
+      'content': _contentController.text,
+      // 'media_type': '',image
+      'media_urls': mediaUrls,
+      'uid': uid,
+      'is_private': _isPrivate
+    });
+    if (response.data['code'] == 0) {
+      Navigator.pop(context);
+    }
+  }
+
+  void _testPhotoListParams() async {
+    var result = await PhotoManager.requestPermission();
+    if (result) {
+      // success
+      var assetPathList = await PhotoManager.getAssetPathList(isCache: true);
+      _pickAsset(PickType.all, pathList: assetPathList);
+    } else {
+      // fail
+      /// if result is fail, you can call `PhotoManger.openSetting();`  to open android/ios applicaton's setting to get permission
+    }
+  }
+
+  Widget _buildGridView() {
+    return GridView.count(
+      crossAxisCount: 3,
+      mainAxisSpacing: 2,
+      crossAxisSpacing: 2,
+      children: List.generate(_images.length, (index) {
+        return AssetImageWidget(
+          assetEntity: _images[index],
+          width: 300,
+          height: 200,
+          boxFit: BoxFit.cover,
+          onPressed: () {
+            setState(() {
+              // _images
+            });
+          },
+        );
+      }),
+    );
+  }
+
+  Widget _buildButtonView() {
+    bool isHideImageBtn = _images.length > 8 || _videos.length > 0;
+    bool isHideVideoBtn = _images.length > 0 || _videos.length > 0;
+    return Row(
+      children: <Widget>[
+        isHideImageBtn
+            ? Container()
+            : IconButton(
+                icon: Icon(Icons.photo),
+                onPressed: () => _pickAsset(PickType.onlyImage)),
+        isHideVideoBtn
+            ? Container()
+            : IconButton(
+                icon: Icon(Icons.videocam),
+                onPressed: () => _pickAsset(PickType.onlyVideo)),
+        // IconButton(
+        //     icon: Icon(Icons.videocam),
+        //     onPressed: () => _testPhotoListParams()),
+      ],
+    );
+  }
+
+  void _pickAsset(PickType type, {List<AssetPathEntity> pathList}) async {
+    List<AssetEntity> imgList = await PhotoPicker.pickAsset(
+      // BuildContext required
+      context: context,
+
+      /// The following are optional parameters.
+      themeColor: Colors.blue,
+      // the title color and bottom color
+      padding: 1.0,
+      // item padding
+      dividerColor: Colors.grey,
+      // divider color
+      disableColor: Colors.grey.shade300,
+      // the check box disable color
+      itemRadio: 0.88,
+      // the content item radio
+      maxSelected: type == PickType.onlyVideo ? 1 : 9,
+      // max picker image count
+      // provider: I18nProvider.english,
+      provider: I18nProvider.chinese,
+      // i18n provider ,default is chinese. , you can custom I18nProvider or use ENProvider()
+      rowCount: 3,
+      // item row count
+      textColor: Colors.white,
+      // text color
+      thumbSize: 150,
+      // preview thumb size , default is 64
+      sortDelegate: SortDelegate.common,
+      // default is common ,or you make custom delegate to sort your gallery
+      checkBoxBuilderDelegate: DefaultCheckBoxBuilderDelegate(
+        activeColor: Colors.white,
+        unselectedColor: Colors.white,
+      ),
+      // default is DefaultCheckBoxBuilderDelegate ,or you make custom delegate to create checkbox
+      badgeDelegate: const DurationBadgeDelegate(),
+      // badgeDelegate to show badge widget
+      pickType: type,
+      photoPathList: pathList,
+    );
+
+    if (imgList == null) {
+      // _error = "not select item";
+    } else {
+      List<String> r = [];
+      // print(imgList);
+      for (var e in imgList) {
+        var file = await e.file;
+        // r.add(file.absolute.path);
+        if (type == PickType.onlyVideo) {
+          _uploadFiles.add(new UploadFileInfo(file, '.mp4'));
+        } else {
+          _uploadFiles.add(new UploadFileInfo(file, '.png'));
+        }
+      }
+      // _error = r.join("\n\n");
+      setState(() {
+        if (type == PickType.onlyVideo) {
+          _videos.addAll(imgList);
+        } else {
+          _images.addAll(imgList);
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('post blog'),
-        actions: <Widget>[Text('send')],
+        title: Text('Post Dialog'),
+        actions: <Widget>[
+          Center(
+            child: GestureDetector(
+              onTap: () {
+                _postBlog();
+              },
+              child: Text('send'),
+            ),
+          )
+        ],
       ),
-      body: Text('Dialog'),
+      body: Column(
+        children: <Widget>[
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+            // height: 300,
+            child: TextFormField(
+              autofocus: true,
+              controller: _contentController,
+              keyboardType: TextInputType.multiline,
+              maxLines: 4,
+              maxLength: 200,
+              maxLengthEnforced: true,
+              textInputAction: TextInputAction.send,
+              decoration: InputDecoration(
+                hintText: '说点什么吧...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                ),
+              ),
+            ),
+          ),
+          CheckboxListTile(
+            // secondary: const Icon(Icons.shutter_speed),
+            title: const Text('私人发送'),
+            value: _isPrivate,
+            onChanged: (bool value) {
+              setState(() {
+                _isPrivate = !_isPrivate;
+              });
+            },
+          ),
+          _buildButtonView(),
+          Expanded(
+            child: _images.length > 0 ? _buildGridView() : Container(),
+          ),
+          // Center(child: Text('Error: $_error')),
+        ],
+      ),
     );
+  }
+}
+
+class AssetImageWidget extends StatelessWidget {
+  final AssetEntity assetEntity;
+  final double width;
+  final double height;
+  final BoxFit boxFit;
+  final VoidCallback onPressed;
+
+  const AssetImageWidget({
+    Key key,
+    @required this.assetEntity,
+    this.width,
+    this.height,
+    this.boxFit,
+    this.onPressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (assetEntity == null) {
+      return _buildContainer();
+    }
+    return FutureBuilder<Size>(
+      builder: (c, s) {
+        if (!s.hasData) {
+          return Container();
+        }
+        var size = s.data;
+        return FutureBuilder<Uint8List>(
+          builder: (BuildContext context, snapshot) {
+            if (snapshot.hasData) {
+              return _buildContainer(
+                child: Image.memory(
+                  snapshot.data,
+                  width: width,
+                  height: height,
+                  fit: boxFit,
+                ),
+              );
+            } else {
+              return _buildContainer();
+            }
+          },
+          future: assetEntity.thumbDataWithSize(
+            size.width.toInt(),
+            size.height.toInt(),
+          ),
+        );
+      },
+      future: assetEntity.size,
+    );
+  }
+
+  Widget _buildContainer({Widget child}) {
+    child ??= Container();
+    return Stack(
+      // alignment: Alignment.topRight,
+      fit: StackFit.expand,
+      overflow: Overflow.clip,
+      children: <Widget>[
+        Container(
+          width: width,
+          height: height,
+          child: child,
+        ),
+        Positioned(
+          right: -2,
+          child: IconButton(
+            icon: Icon(Icons.delete_forever),
+            onPressed: onPressed,
+          ),
+        ),
+      ],
+    );
+    // return Container(
+    //   width: width,
+    //   height: height,
+    //   child: child,
+    // );
   }
 }
 
@@ -236,7 +531,7 @@ class ForwardBlogDialog extends StatelessWidget {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int uid = await prefs.get('uid');
     // data: { title, content, media_urls, media_type, uid, forward_comment, source_id, is_private }
-    await dio.post('http://localhost:3000/api/blog/postblog', data: {
+    await dio.post('$baseUrl/blog/postblog', data: {
       'forward_comment': _commentController.text,
       'uid': uid,
       'source_id': sourceId
@@ -300,8 +595,7 @@ class BlogDetailPageState extends State<BlogDetailPage> {
   List _comments = [];
 
   _getComments() async {
-    Response response = await dio.get(
-        'http://localhost:3000/api/blog/getcomments',
+    Response response = await dio.get('$baseUrl/blog/getcomments',
         queryParameters: {'blogid': widget.blog['id']});
     setState(() {
       _comments = response.data['comments'];
@@ -316,7 +610,7 @@ class BlogDetailPageState extends State<BlogDetailPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int uid = await prefs.get('uid');
     Response response = await dio.post(
-      'http://localhost:3000/api/blog/postcomment',
+      '$baseUrl/blog/postcomment',
       data: {
         'blogid': widget.blog['id'],
         'content': content,
@@ -335,6 +629,7 @@ class BlogDetailPageState extends State<BlogDetailPage> {
         return ListTile(
           leading: CircleAvatar(
             backgroundImage: NetworkImage(urlPath + comment['uavator']),
+            // backgroundImage: new CachedNetworkImageProvider(urlPath + comment['uavator']),
           ),
           title: Text(comment['content']),
           subtitle: Text(comment['uname']),
@@ -454,11 +749,7 @@ class BuildBlog extends StatelessWidget {
       child: Container(
         margin: EdgeInsets.all(2),
         child: mediaType == 'image'
-            ? Wrap(
-                spacing: 5, //主轴上子控件的间距
-                runSpacing: 5, //交叉轴上子控件之间的间距
-                children: _initImages(mediaUrls),
-              )
+            ? _initImages(mediaUrls)
             : Image.asset('assets/images/video_default.jpg'),
       ),
     );
@@ -466,14 +757,18 @@ class BuildBlog extends StatelessWidget {
 
   _previewImage(String imageUrls, BuildContext context) {
     List images = [];
+    List viewImages = [];
     if (imageUrls.isNotEmpty) {
       images = imageUrls.split(',');
+    }
+    for (var image in images) {
+      viewImages.add(urlPath + image);
     }
     Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) {
-            return PhotoViewPage(images);
+            return PhotoViewPage(viewImages);
           },
           fullscreenDialog: true,
         ));
@@ -491,31 +786,51 @@ class BuildBlog extends StatelessWidget {
         ));
   }
 
-  List<Widget> _initImages(String imagesStr) {
+  Widget _initImages(String imagesStr) {
     List images = [];
     if (imagesStr.isNotEmpty) {
       images = imagesStr.split(',');
     }
-    List<Widget> widgets = <Widget>[];
     var len = images.length;
-    double width;
-    if (len == 1) {
-      width = 336;
-    } else if (len == 2) {
-      width = 168;
-    } else {
-      width = 120;
+    if (len == 0) {
+      return Container();
     }
+    List<Widget> widgets = <Widget>[];
+
+    // double width;
+    // if (len == 1) {
+    //   width = 336;
+    // } else if (len == 2) {
+    //   width = 168;
+    // } else {
+    //   width = 120;
+    // }
     for (var image in images) {
-      Widget widget = Image.network(
-        urlPath + image,
-        height: 120,
-        width: width,
-        fit: BoxFit.contain,
+      // Widget widget = Image.network(
+      //   urlPath + image,
+      //   height: 100,
+      //   width: 100,
+      //   fit: BoxFit.cover,
+      // );
+      Widget widget = new Image(
+        // image: new CachedNetworkImageProvider(urlPath + image),
+        image: NetworkImage(urlPath + image),
+        width: 100,
+        height: 100,
+        fit: BoxFit.cover,
       );
       widgets.add(widget);
     }
-    return widgets;
+    return GridView.count(
+      crossAxisCount: images.length > 2 ? 3 : images.length,
+      // crossAxisCount: 3,
+      mainAxisSpacing: 2,
+      crossAxisSpacing: 2,
+      childAspectRatio: images.length > 2 ? 1 : 1 / 2,
+      shrinkWrap: true, //增加
+      physics: new NeverScrollableScrollPhysics(), //增加
+      children: widgets,
+    );
   }
 
   @override
@@ -536,6 +851,7 @@ class BuildBlog extends StatelessWidget {
                 children: <Widget>[
                   CircleAvatar(
                     backgroundImage: NetworkImage(urlPath + blog['uavator']),
+                    // backgroundImage: new CachedNetworkImageProvider(urlPath + blog['uavator']),
                     // child: Text(blog['uname']),
                   ),
                   Container(
@@ -557,8 +873,8 @@ class BuildBlog extends StatelessWidget {
                 ],
               )
             : Container(),
-        // 评论内容 转发时的评论 type区分是否为转发
-        type == BuildBlog.forward_blog 
+        // 评论内容 转发时的评�� type区分是否为转发
+        type == BuildBlog.forward_blog
             ? Container(
                 child: Text(
                   forwardComment,
@@ -600,13 +916,15 @@ class MyBlogPageState extends State<MyBlogPage> {
   Response response;
   ScrollController _controller = new ScrollController();
   bool isLoading = false;
+  Duration duration = new Duration(seconds: 1);
+  Timer timer;
 
   _initData() async {
     isLoading = true;
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int uid = await prefs.get('uid');
-    response = await dio.get('http://localhost:3000/api/blog/getBlogsByUser',
-        queryParameters: {'uid': uid});
+    response = await dio
+        .get('$baseUrl/blog/getBlogsByUser', queryParameters: {'uid': uid});
     isLoading = false;
     setState(() {
       blogs = response.data['blogs'];
@@ -620,7 +938,10 @@ class MyBlogPageState extends State<MyBlogPage> {
     _controller.addListener(() {
       // 顶端下拉刷新数据
       if (_controller.offset <= 0 && !isLoading) {
-        _initData();
+        timer?.cancel();
+        timer = new Timer(duration, () {
+          _initData();
+        });
       }
     });
   }

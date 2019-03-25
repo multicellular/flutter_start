@@ -10,11 +10,12 @@ class VideoApp extends StatefulWidget {
 
 class _VideoAppState extends State<VideoApp> {
   VideoPlayerController _controller;
-
+  String testUrl =
+      'http://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_20mb.mp4';
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(widget.url)
+    _controller = VideoPlayerController.network(/*widget.url*/ testUrl)
       ..initialize().then((_) {
         // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
         setState(() {});

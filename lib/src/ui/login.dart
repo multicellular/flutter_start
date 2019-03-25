@@ -5,10 +5,12 @@ import 'package:dio/dio.dart';
 import './blog/blog.dart';
 import './register.dart';
 
+import './models/config.dart';
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
 Dio dio = new Dio();
 // dio.options.baseUrl = 'localhost:3000/api';
+String baseUrl = DefaultConfig.baseUrl;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -22,7 +24,7 @@ class LoginPageState extends State<LoginPage> {
 
   _signIn() async {
     // Response response;
-    Response response = await dio.post('http://localhost:3000/api/user/signin',
+    Response response = await dio.post('$baseUrl/user/signin',
         data: {'name': _unameController.text, 'password': _pwdController.text});
     // Map<String, dynamic> res = response.data;
     if (response.data['code'] == 0) {
@@ -62,7 +64,7 @@ class LoginPageState extends State<LoginPage> {
             ],
           ),
           child: Container(
-            margin: EdgeInsets.only(top: 200, left: 20, right: 20),
+            margin: EdgeInsets.only(top: 100, left: 20, right: 20),
             child: Form(
               // key: _fromKey,
               child: Column(

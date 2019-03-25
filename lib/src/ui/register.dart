@@ -6,10 +6,12 @@ import './blog/blog.dart';
 import './login.dart';
 // import 'dart:async';
 
+import './models/config.dart';
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
 Dio dio = new Dio();
 // dio.options.baseUrl = 'localhost:3000/api';
+String baseUrl = DefaultConfig.baseUrl;
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -32,10 +34,10 @@ class RegisterPageState extends State<RegisterPage> {
     FormData formData =
         new FormData.from({'file': new UploadFileInfo(avator, 'avator.png')});
     Response uplaodFile =
-        await dio.post('http://localhost:3000/api/uploadFile', data: formData);
-    String avatorUrl = uplaodFile.data['file']['path'];
+        await dio.post('$baseUrl/uploadFile', data: formData);
+    String avatorUrl = uplaodFile.data['urls'];
     Response response =
-        await dio.post('http://localhost:3000/api/user/signup', data: {
+        await dio.post('$baseUrl/user/signup', data: {
       'name': _unameController.text,
       'password': _pwdController.text,
       'avator': avatorUrl
@@ -56,7 +58,7 @@ class RegisterPageState extends State<RegisterPage> {
         title: Text("Register"),
       ),
       body: Container(
-        margin: EdgeInsets.only(top: 100, left: 20, right: 20),
+        margin: EdgeInsets.only(top: 50, left: 20, right: 20),
         child: Form(
           // key: _fromKey,
           child: Column(
