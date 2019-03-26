@@ -817,7 +817,7 @@ class BuildBlog extends StatelessWidget {
         MaterialPageRoute(
           builder: (context) {
             // return PhotoViewPage(images);
-            return VideoApp(url);
+            return VideoApp(urlPath + url);
           },
           fullscreenDialog: true,
         ));
