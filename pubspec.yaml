@@ -27,7 +27,8 @@ dependencies:
   shared_preferences: ^0.5.1+2
   # multi_image_picker: 2.3.33
   photo: ^0.3.3
-  # cached_network_image: ^0.7.0
+  flutter_spinkit: "^3.1.0"
+  cached_network_image: ^0.7.0
 
 dev_dependencies:
   flutter_test:

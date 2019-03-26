@@ -1,4 +1,4 @@
-import 'dart:async';
+// import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -11,9 +11,11 @@ import 'package:photo/photo.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'dart:typed_data';
 
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+
 // import 'package:path/path.dart' as path;
 
-// import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../models/config.dart';
 
@@ -33,16 +35,17 @@ class BlogPageState extends State<BlogPage> {
   List blogs = [];
   Response response;
   ScrollController _controller = new ScrollController();
-  bool isLoading = false;
-  Duration duration = new Duration(seconds: 1);
-  Timer timer;
+  bool isRefreshing = false;
+  CircularProgressIndicator progressIndicator = CircularProgressIndicator();
 
   _initData() async {
-    isLoading = true;
+    setState(() {
+      isRefreshing = true;
+    });
     response = await dio.get('$baseUrl/blog/getblogs');
-    isLoading = false;
     setState(() {
       blogs = response.data['blogs'];
+      isRefreshing = false;
     });
   }
 
@@ -52,11 +55,8 @@ class BlogPageState extends State<BlogPage> {
     _initData();
     _controller.addListener(() {
       // 顶端下拉刷新数据
-      if (_controller.offset <= 0 && !isLoading) {
-        timer?.cancel();
-        timer = new Timer(duration, () {
-          _initData();
-        });
+      if (_controller.offset <= 0 && !isRefreshing) {
+        _initData();
       }
     });
   }
@@ -71,164 +71,173 @@ class BlogPageState extends State<BlogPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Blog'),
-        actions: <Widget>[
-          PopupMenuButton<String>(
-            // overflow menu
-            onSelected: (value) {
-              if (value == 'is_private') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) {
-                    // return PhotoViewPage(images);
-                    return MyBlogPage();
-                  }),
-                );
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                PopupMenuItem<String>(
-                  value: 'is_private',
-                  child: Text('my blogs'),
-                )
-              ];
-            },
-          ),
-        ],
-      ),
-      drawer: Drawer(),
-      bottomNavigationBar: BottomAppBar(
-        shape: CircularNotchedRectangle(),
-        child: Row(
-          children: <Widget>[
-            IconButton(
-              icon: Icon(Icons.home),
-              iconSize: 50,
-              onPressed: () {},
-            ),
-            SizedBox(),
-            IconButton(
-              icon: Icon(Icons.group),
-              iconSize: 50,
-              onPressed: () {},
-            )
-          ],
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add_circle_outline),
-        onPressed: () async {
-          var newBlog = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) {
-                // return PhotoViewPage(images);
-                return PostBlogDialog();
+        appBar: AppBar(
+          title: Text('Blog'),
+          actions: <Widget>[
+            PopupMenuButton<String>(
+              // overflow menu
+              onSelected: (value) {
+                if (value == 'is_private') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) {
+                      // return PhotoViewPage(images);
+                      return MyBlogPage();
+                    }),
+                  );
+                }
               },
-              fullscreenDialog: true,
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem<String>(
+                    value: 'is_private',
+                    child: Text('my blogs'),
+                  )
+                ];
+              },
             ),
-          );
-          if (newBlog != null) {
-            blogs.insert(0, newBlog);
-          }
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      body: Container(
-        child: ListView.builder(
-          controller: _controller,
-          itemCount: blogs.length,
-          // itemExtent: 200,
-          itemBuilder: (BuildContext context, int index) {
-            var blog = blogs[index];
-            bool isForward = false;
-            if (blog['forwardObj'] != null &&
-                blog['forwardObj']['source_id'] != null) {
-              isForward = true;
-            }
-            return Card(
-              margin: EdgeInsets.all(10),
-              child: Container(
-                padding: EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  // mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[
-                    BuildBlog(
-                        blog,
-                        isForward
-                            ? BuildBlog.forward_blog
-                            : BuildBlog.normal_blog,
-                        true),
-                    Container(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: <Widget>[
-                          Column(
-                            children: <Widget>[
-                              IconButton(
-                                icon: Icon(Icons.redo),
-                                onPressed: () async {
-                                  var newBlog = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) {
-                                        // return PhotoViewPage(images);
-                                        return ForwardBlogDialog(blog);
-                                      },
-                                      fullscreenDialog: true,
-                                    ),
-                                  );
-                                  if (newBlog != null) {
-                                    blog['forwards'] =
-                                        (int.parse(blog['forwards']) + 1)
-                                            .toString();
-                                    blogs.insert(0, newBlog);
-                                  }
-                                },
-                              ),
-                              Text(blog['forwards']),
-                            ],
-                          ),
-                          Column(
-                            children: <Widget>[
-                              IconButton(
-                                icon: Icon(Icons.comment),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) {
-                                        // return PhotoViewPage(images);
-                                        return BlogDetailPage(blog);
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                              Text(blog['comments']),
-                            ],
-                          ),
-                          Column(
-                            children: <Widget>[
-                              Icon(Icons.thumb_up),
-                              Text('0'),
-                            ],
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
+          ],
+        ),
+        drawer: Drawer(),
+        bottomNavigationBar: BottomAppBar(
+          shape: CircularNotchedRectangle(),
+          child: Row(
+            children: <Widget>[
+              IconButton(
+                icon: Icon(Icons.home),
+                iconSize: 50,
+                onPressed: () {},
+              ),
+              SizedBox(),
+              IconButton(
+                icon: Icon(Icons.group),
+                iconSize: 50,
+                onPressed: () {},
+              )
+            ],
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add_circle_outline),
+          onPressed: () async {
+            var newBlog = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) {
+                  // return PhotoViewPage(images);
+                  return PostBlogDialog();
+                },
+                fullscreenDialog: true,
               ),
             );
+            if (newBlog != null) {
+              blogs.insert(0, newBlog);
+            }
           },
         ),
-      ),
-    );
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        body: Column(
+          children: <Widget>[
+            isRefreshing
+                ? SpinKitCircle(
+                    color: Colors.blue,
+                    size: 50.0,
+                  )
+                : Container(),
+            Expanded(
+              child: ListView.builder(
+                controller: _controller,
+                itemCount: blogs.length,
+                // itemExtent: 200,
+                itemBuilder: (BuildContext context, int index) {
+                  var blog = blogs[index];
+                  bool isForward = false;
+                  if (blog['forwardObj'] != null &&
+                      blog['forwardObj']['source_id'] != null) {
+                    isForward = true;
+                  }
+                  return Card(
+                    margin: EdgeInsets.all(10),
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        // mainAxisSize: MainAxisSize.max,
+                        children: <Widget>[
+                          BuildBlog(
+                            blog: blog,
+                            type: isForward
+                                ? BuildBlog.forward_blog
+                                : BuildBlog.normal_blog,
+                          ),
+                          Container(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: <Widget>[
+                                Column(
+                                  children: <Widget>[
+                                    IconButton(
+                                      icon: Icon(Icons.redo),
+                                      onPressed: () async {
+                                        var newBlog = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              // return PhotoViewPage(images);
+                                              return ForwardBlogDialog(blog);
+                                            },
+                                            fullscreenDialog: true,
+                                          ),
+                                        );
+                                        if (newBlog != null) {
+                                          blog['forwards'] =
+                                              (int.parse(blog['forwards']) + 1)
+                                                  .toString();
+                                          blogs.insert(0, newBlog);
+                                        }
+                                      },
+                                    ),
+                                    Text(blog['forwards']),
+                                  ],
+                                ),
+                                Column(
+                                  children: <Widget>[
+                                    IconButton(
+                                      icon: Icon(Icons.comment),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              // return PhotoViewPage(images);
+                                              return BlogDetailPage(blog);
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    Text(blog['comments']),
+                                  ],
+                                ),
+                                Column(
+                                  children: <Widget>[
+                                    Icon(Icons.thumb_up),
+                                    Text('0'),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ));
   }
 }
 
@@ -599,7 +608,8 @@ class ForwardBlogDialog extends StatelessWidget {
                   Navigator.pop(context);
                 }),
           ),
-          BuildBlog(blog, BuildBlog.forward_blog, false),
+          BuildBlog(
+              blog: blog, type: BuildBlog.forward_blog, showHeader: false),
         ],
       ),
     );
@@ -654,11 +664,11 @@ class BlogDetailPageState extends State<BlogDetailPage> {
       children: comments.map((comment) {
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: NetworkImage(urlPath + comment['uavator']),
-            // backgroundImage: new CachedNetworkImageProvider(urlPath + comment['uavator']),
+            // backgroundImage: NetworkImage(urlPath + comment['uavator']),
+            backgroundImage: new CachedNetworkImageProvider(urlPath + comment['uavator']),
           ),
-          title: Text(comment['content']),
-          subtitle: Text(comment['uname']),
+          title: Text(comment['uname']),
+          subtitle: Text(comment['content']),
         );
       }).toList(),
     );
@@ -738,9 +748,10 @@ class BlogDetailPageState extends State<BlogDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               BuildBlog(
-                  widget.blog,
-                  isForward ? BuildBlog.forward_blog : BuildBlog.normal_blog,
-                  true),
+                  blog: widget.blog,
+                  type: isForward
+                      ? BuildBlog.forward_blog
+                      : BuildBlog.normal_blog),
               Container(
                 margin: EdgeInsets.only(top: 12),
                 child: Text('comments'),
@@ -762,7 +773,7 @@ class BuildBlog extends StatelessWidget {
   static const String forward_blog = 'forward_blog';
   static const String my_blog = 'my_blog';
 
-  BuildBlog(this.blog, this.type, this.showHeader);
+  BuildBlog({this.blog, this.type, this.showHeader = true});
 
   Widget _initMediaWidget(
       String mediaType, String mediaUrls, BuildContext context) {
@@ -822,25 +833,10 @@ class BuildBlog extends StatelessWidget {
       return Container();
     }
     List<Widget> widgets = <Widget>[];
-
-    // double width;
-    // if (len == 1) {
-    //   width = 336;
-    // } else if (len == 2) {
-    //   width = 168;
-    // } else {
-    //   width = 120;
-    // }
     for (var image in images) {
-      // Widget widget = Image.network(
-      //   urlPath + image,
-      //   height: 100,
-      //   width: 100,
-      //   fit: BoxFit.cover,
-      // );
       Widget widget = new Image(
-          // image: new CachedNetworkImageProvider(urlPath + image),
-          image: NetworkImage(urlPath + image),
+          image: new CachedNetworkImageProvider(urlPath + image),
+          // image: NetworkImage(urlPath + image),
           width: 100,
           height: 100,
           fit: BoxFit.cover);
@@ -875,8 +871,8 @@ class BuildBlog extends StatelessWidget {
             ? Row(
                 children: <Widget>[
                   CircleAvatar(
-                    backgroundImage: NetworkImage(urlPath + blog['uavator']),
-                    // backgroundImage: new CachedNetworkImageProvider(urlPath + blog['uavator']),
+                    // backgroundImage: NetworkImage(urlPath + blog['uavator']),
+                    backgroundImage: new CachedNetworkImageProvider(urlPath + blog['uavator']),
                     // child: Text(blog['uname']),
                   ),
                   Container(
@@ -921,9 +917,19 @@ class BuildBlog extends StatelessWidget {
         _initMediaWidget(blog['media_type'], blog['media_urls'], context),
         // 博客时间 暂用于我的博客 type区分是否个人博客
         type == BuildBlog.my_blog
-            ? Container(
-                margin: EdgeInsets.only(top: 12),
-                child: Text(blog['moment']),
+            ? Row(
+                children: <Widget>[
+                  Container(
+                    margin: EdgeInsets.only(top: 12),
+                    child: Text(blog['moment']),
+                  ),
+                ],
+                // Response response = await dio.get(
+                //         '$baseUrl/blog/deleteBlog',
+                //         queryParameters: {'blogid': blog['id']});
+                //     if (response.data['code'] == 0) {
+                //       _onPressed;
+                //     }
               )
             : Container()
       ],
@@ -940,19 +946,20 @@ class MyBlogPageState extends State<MyBlogPage> {
   List blogs = [];
   Response response;
   ScrollController _controller = new ScrollController();
-  bool isLoading = false;
-  Duration duration = new Duration(seconds: 1);
-  Timer timer;
+  bool isRefreshing = false;
 
   _initData() async {
-    isLoading = true;
+    setState(() {
+      isRefreshing = true;
+    });
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int uid = await prefs.get('uid');
     response = await dio
         .get('$baseUrl/blog/getBlogsByUser', queryParameters: {'uid': uid});
-    isLoading = false;
+
     setState(() {
       blogs = response.data['blogs'];
+      isRefreshing = false;
     });
   }
 
@@ -962,11 +969,8 @@ class MyBlogPageState extends State<MyBlogPage> {
     _initData();
     _controller.addListener(() {
       // 顶端下拉刷新数据
-      if (_controller.offset <= 0 && !isLoading) {
-        timer?.cancel();
-        timer = new Timer(duration, () {
-          _initData();
-        });
+      if (_controller.offset <= -40 && !isRefreshing) {
+        _initData();
       }
     });
   }
@@ -982,30 +986,44 @@ class MyBlogPageState extends State<MyBlogPage> {
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
-      appBar: AppBar(
-        title: Text('my blog'),
-      ),
-      body: Container(
-        child: ListView.builder(
-          controller: _controller,
-          itemCount: blogs.length,
-          // itemExtent: 200,
-          itemBuilder: (BuildContext context, int index) {
-            var blog = blogs[index];
-            return Card(
-              margin: EdgeInsets.all(10),
-              child: Container(
-                padding: EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  // mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[BuildBlog(blog, BuildBlog.my_blog, false)],
-                ),
-              ),
-            );
-          },
+        appBar: AppBar(
+          title: Text('my blog'),
         ),
-      ),
-    );
+        body: Column(
+          children: <Widget>[
+            isRefreshing
+                ? SpinKitCircle(
+                    color: Colors.blue,
+                    size: 50.0,
+                  )
+                : Container(),
+            Expanded(
+              child: ListView.builder(
+                controller: _controller,
+                itemCount: blogs.length,
+                // itemExtent: 200,
+                itemBuilder: (BuildContext context, int index) {
+                  var blog = blogs[index];
+                  return Card(
+                    margin: EdgeInsets.all(10),
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        // mainAxisSize: MainAxisSize.max,
+                        children: <Widget>[
+                          BuildBlog(
+                              blog: blog,
+                              type: BuildBlog.my_blog,
+                              showHeader: false)
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ));
   }
 }
