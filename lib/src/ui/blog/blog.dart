@@ -11,6 +11,8 @@ import 'package:photo/photo.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'dart:typed_data';
 
+// import 'package:path/path.dart' as path;
+
 // import 'package:cached_network_image/cached_network_image.dart';
 
 import '../models/config.dart';
@@ -118,8 +120,8 @@ class BlogPageState extends State<BlogPage> {
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add_circle_outline),
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          var newBlog = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) {
@@ -129,6 +131,9 @@ class BlogPageState extends State<BlogPage> {
               fullscreenDialog: true,
             ),
           );
+          if (newBlog != null) {
+            blogs.insert(0, newBlog);
+          }
         },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -166,8 +171,8 @@ class BlogPageState extends State<BlogPage> {
                             children: <Widget>[
                               IconButton(
                                 icon: Icon(Icons.redo),
-                                onPressed: () {
-                                  Navigator.push(
+                                onPressed: () async {
+                                  var newBlog = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) {
@@ -177,6 +182,12 @@ class BlogPageState extends State<BlogPage> {
                                       fullscreenDialog: true,
                                     ),
                                   );
+                                  if (newBlog != null) {
+                                    blog['forwards'] =
+                                        (int.parse(blog['forwards']) + 1)
+                                            .toString();
+                                    blogs.insert(0, newBlog);
+                                  }
                                 },
                               ),
                               Text(blog['forwards']),
@@ -231,10 +242,18 @@ class PostBlogDialogState extends State<PostBlogDialog> {
   List<AssetEntity> _images = [];
   List<AssetEntity> _videos = [];
   // String _error = '';
-  List _uploadFiles = [];
   bool _isPrivate = false;
 
   _postBlog() async {
+    List<AssetEntity> uploads = _videos.length > 0 ? _videos : _images;
+    String mediaType = _videos.length > 0 ? 'video' : 'image';
+    List _uploadFiles = [];
+    for (var upload in uploads) {
+      var file = await upload.file;
+      // String extension = path.extension(file.path);
+      // print(extension);
+      _uploadFiles.add(new UploadFileInfo(file, file.path));
+    }
     FormData formData = new FormData.from({'file': _uploadFiles});
     Response uplaodFile = await dio.post('$baseUrl/uploadFile', data: formData);
     String mediaUrls = uplaodFile.data['urls'];
@@ -243,13 +262,13 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     Response response = await dio.post('$baseUrl/blog/postblog', data: {
       // 'title': '',
       'content': _contentController.text,
-      // 'media_type': '',image
+      'media_type': mediaType,
       'media_urls': mediaUrls,
       'uid': uid,
       'is_private': _isPrivate
     });
     if (response.data['code'] == 0) {
-      Navigator.pop(context);
+      Navigator.pop(context, response.data['blog']);
     }
   }
 
@@ -273,12 +292,13 @@ class PostBlogDialogState extends State<PostBlogDialog> {
       children: List.generate(_images.length, (index) {
         return AssetImageWidget(
           assetEntity: _images[index],
-          width: 300,
+          width: 200,
           height: 200,
-          boxFit: BoxFit.contain,
+          boxFit: BoxFit.cover,
           onPressed: () {
             setState(() {
               // _images
+              _images.removeAt(index);
             });
           },
         );
@@ -351,17 +371,16 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     if (imgList == null) {
       // _error = "not select item";
     } else {
-      List<String> r = [];
-      // print(imgList);
-      for (var e in imgList) {
-        var file = await e.file;
-        // r.add(file.absolute.path);
-        if (type == PickType.onlyVideo) {
-          _uploadFiles.add(new UploadFileInfo(file, '.mp4'));
-        } else {
-          _uploadFiles.add(new UploadFileInfo(file, '.png'));
-        }
-      }
+      // List<String> r = [];
+      // for (var e in imgList) {
+      //   var file = await e.file;
+      //   // r.add(file.absolute.path);
+      //   if (type == PickType.onlyVideo) {
+      //     _uploadFiles.add(new UploadFileInfo(file, '.mp4'));
+      //   } else {
+      //     _uploadFiles.add(new UploadFileInfo(file, '.png'));
+      //   }
+      // }
       // _error = r.join("\n\n");
       setState(() {
         if (type == PickType.onlyVideo) {
@@ -486,7 +505,7 @@ class AssetImageWidget extends StatelessWidget {
   Widget _buildContainer({Widget child}) {
     child ??= Container();
     return Stack(
-      // alignment: Alignment.topRight,
+      alignment: Alignment.center,
       fit: StackFit.expand,
       overflow: Overflow.clip,
       children: <Widget>[
@@ -496,8 +515,10 @@ class AssetImageWidget extends StatelessWidget {
           child: child,
         ),
         Positioned(
-          right: -2,
+          right: 0,
+          top: 0,
           child: IconButton(
+            color: Colors.redAccent,
             icon: Icon(Icons.delete_forever),
             onPressed: onPressed,
           ),
@@ -531,12 +552,14 @@ class ForwardBlogDialog extends StatelessWidget {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int uid = await prefs.get('uid');
     // data: { title, content, media_urls, media_type, uid, forward_comment, source_id, is_private }
-    await dio.post('$baseUrl/blog/postblog', data: {
+    Response result = await dio.post('$baseUrl/blog/postblog', data: {
       'forward_comment': _commentController.text,
       'uid': uid,
       'source_id': sourceId
     });
-    Navigator.pop(context);
+    if (result.data['code'] == 0) {
+      Navigator.pop(context, result.data['blog']);
+    }
   }
 
   @override
@@ -617,10 +640,13 @@ class BlogDetailPageState extends State<BlogDetailPage> {
         'uid': uid,
       },
     );
-    var comment = response.data['comment'];
-    setState(() {
-      _comments.add(comment);
-    });
+    if (response.data['code'] == 0) {
+      var comment = response.data['comment'];
+      setState(() {
+        _comments.add(comment);
+        widget.blog['comments'] = _comments.length.toString();
+      });
+    }
   }
 
   Widget _buildCommentsWidget(List comments) {
@@ -813,12 +839,11 @@ class BuildBlog extends StatelessWidget {
       //   fit: BoxFit.cover,
       // );
       Widget widget = new Image(
-        // image: new CachedNetworkImageProvider(urlPath + image),
-        image: NetworkImage(urlPath + image),
-        width: 100,
-        height: 100,
-        fit: BoxFit.contain
-      );
+          // image: new CachedNetworkImageProvider(urlPath + image),
+          image: NetworkImage(urlPath + image),
+          width: 100,
+          height: 100,
+          fit: BoxFit.cover);
       widgets.add(widget);
     }
     return GridView.count(
@@ -826,7 +851,7 @@ class BuildBlog extends StatelessWidget {
       // crossAxisCount: 3,
       mainAxisSpacing: 2,
       crossAxisSpacing: 2,
-      childAspectRatio: images.length > 2 ? 1 : 3/2,
+      childAspectRatio: images.length > 2 ? 1 : 3 / 2,
       shrinkWrap: true, //增加
       physics: new NeverScrollableScrollPhysics(), //增加
       children: widgets,
