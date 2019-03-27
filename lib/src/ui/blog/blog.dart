@@ -1,5 +1,8 @@
 // import 'dart:async';
 
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
@@ -16,6 +19,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 // import 'package:path/path.dart' as path;
 
 import 'package:cached_network_image/cached_network_image.dart';
+
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import '../models/config.dart';
 
@@ -258,7 +263,9 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     String mediaType = _videos.length > 0 ? 'video' : 'image';
     List _uploadFiles = [];
     for (var upload in uploads) {
-      var file = await upload.file;
+      File tempFile = await upload.file;
+      File file =
+          mediaType == 'image' ? await _compressAndGetFile(tempFile) : tempFile;
       // String extension = path.extension(file.path);
       // print(extension);
       _uploadFiles.add(new UploadFileInfo(file, file.path));
@@ -291,6 +298,20 @@ class PostBlogDialogState extends State<PostBlogDialog> {
       // fail
       /// if result is fail, you can call `PhotoManger.openSetting();`  to open android/ios applicaton's setting to get permission
     }
+  }
+
+  Future<File> _compressAndGetFile(File file) async {
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      file.absolute.path,
+      minWidth: 300,
+      minHeight: 300,
+      quality: 100,
+      // rotate: 90,
+    );
+    // print(file.lengthSync());
+    // print(result.length);
+    return result;
   }
 
   Widget _buildGridView() {
@@ -358,11 +379,11 @@ class PostBlogDialogState extends State<PostBlogDialog> {
       // provider: I18nProvider.english,
       provider: I18nProvider.chinese,
       // i18n provider ,default is chinese. , you can custom I18nProvider or use ENProvider()
-      rowCount: 3,
+      // rowCount: 3,
       // item row count
       textColor: Colors.white,
       // text color
-      thumbSize: 150,
+      // thumbSize: 64,
       // preview thumb size , default is 64
       sortDelegate: SortDelegate.common,
       // default is common ,or you make custom delegate to sort your gallery
@@ -474,7 +495,6 @@ class AssetImageWidget extends StatelessWidget {
     this.boxFit,
     this.onPressed,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     if (assetEntity == null) {
@@ -665,7 +685,8 @@ class BlogDetailPageState extends State<BlogDetailPage> {
         return ListTile(
           leading: CircleAvatar(
             // backgroundImage: NetworkImage(urlPath + comment['uavator']),
-            backgroundImage: new CachedNetworkImageProvider(urlPath + comment['uavator']),
+            backgroundImage:
+                new CachedNetworkImageProvider(urlPath + comment['uavator']),
           ),
           title: Text(comment['uname']),
           subtitle: Text(comment['content']),
@@ -872,7 +893,8 @@ class BuildBlog extends StatelessWidget {
                 children: <Widget>[
                   CircleAvatar(
                     // backgroundImage: NetworkImage(urlPath + blog['uavator']),
-                    backgroundImage: new CachedNetworkImageProvider(urlPath + blog['uavator']),
+                    backgroundImage: new CachedNetworkImageProvider(
+                        urlPath + blog['uavator']),
                     // child: Text(blog['uname']),
                   ),
                   Container(

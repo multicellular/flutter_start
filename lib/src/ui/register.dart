@@ -1,12 +1,16 @@
 import 'dart:io';
+// import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+
 import './blog/blog.dart';
 import './login.dart';
 // import 'dart:async';
 
 import './models/config.dart';
+
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
 Dio dio = new Dio();
@@ -22,8 +26,9 @@ class RegisterPageState extends State<RegisterPage> {
   TextEditingController _unameController = new TextEditingController();
   TextEditingController _pwdController = new TextEditingController();
   // GlobalKey _fromKey = new GlobalKey();
-  Future<File> _imageFile;
-  File avator;
+  // Future<File> _imageFile;
+  File _imageFile;
+  // File avator;
   // void _selectedImage() {
   //   setState(() {
   //     _imageFile = ImagePicker.pickImage(source: ImageSource.gallery);
@@ -31,13 +36,11 @@ class RegisterPageState extends State<RegisterPage> {
   // }
 
   _signUp() async {
-    FormData formData =
-        new FormData.from({'file': new UploadFileInfo(avator, 'avator.png')});
-    Response uplaodFile =
-        await dio.post('$baseUrl/uploadFile', data: formData);
+    FormData formData = new FormData.from(
+        {'file': new UploadFileInfo(_imageFile, _imageFile.path)});
+    Response uplaodFile = await dio.post('$baseUrl/uploadFile', data: formData);
     String avatorUrl = uplaodFile.data['urls'];
-    Response response =
-        await dio.post('$baseUrl/user/signup', data: {
+    Response response = await dio.post('$baseUrl/user/signup', data: {
       'name': _unameController.text,
       'password': _pwdController.text,
       'avator': avatorUrl
@@ -49,6 +52,41 @@ class RegisterPageState extends State<RegisterPage> {
       }));
     }
   }
+
+  // Future<List<int>> _compressFile(File file) async {
+  //   var result = await FlutterImageCompress.compressWithFile(
+  //     file.absolute.path,
+  //     // minWidth: 2300,
+  //     // minHeight: 1500,
+  //     quality: 94,
+  //     rotate: 90,
+  //   );
+  //   print(file.lengthSync());
+  //   print(result.length);
+  //   return result;
+  // }
+
+  Future<File> _compressAndGetFile(File file) async {
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      file.absolute.path,
+      minWidth: 70,
+      minHeight: 70,
+      quality: 94,
+      rotate: 90,
+    );
+    // print(file.lengthSync());
+    // print(result.length);
+    return result;
+  }
+
+  // Future<Widget> _buildImage() async {
+  //   List<int> list = await _compressFile(_imageFile);
+  //   ImageProvider provider = MemoryImage(Uint8List.fromList(list));
+  //   return Image(
+  //     image: provider ?? AssetImage("assets/images/video_default.jpg"),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -82,59 +120,55 @@ class RegisterPageState extends State<RegisterPage> {
                   Icon(Icons.face),
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                    child: FutureBuilder(
-                      future: _imageFile,
-                      builder:
-                          (BuildContext context, AsyncSnapshot<File> snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done &&
-                            snapshot.data != null) {
-                          avator = snapshot.data;
-                          return ClipOval(
+                    child: _imageFile != null
+                        ? ClipOval(
                             child: SizedBox(
-                                width: 70.0,
-                                height: 70.0,
-                                child: Image.file(snapshot.data,
-                                    fit: BoxFit.cover)),
-                          );
-                        } else {
-                          return IconButton(
+                              width: 70.0,
+                              height: 70.0,
+                              child: Image.file(_imageFile, fit: BoxFit.cover),
+                            ),
+                          )
+                        : IconButton(
                             icon: Icon(Icons.add_photo_alternate),
                             tooltip: '请选择上传头像',
-                            iconSize: 80.0,
+                            iconSize: 40.0,
                             onPressed: () {
                               showModalBottomSheet(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return new Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        new ListTile(
-                                          leading: new Icon(Icons.photo_camera),
-                                          title: new Text("Camera"),
-                                          onTap: () {
-                                            _imageFile = ImagePicker.pickImage(
-                                                source: ImageSource.camera);
-                                            Navigator.pop(context);
-                                          },
-                                        ),
-                                        new ListTile(
-                                          leading:
-                                              new Icon(Icons.photo_library),
-                                          title: new Text("Gallery"),
-                                          onTap: () {
-                                            _imageFile = ImagePicker.pickImage(
-                                                source: ImageSource.gallery);
-                                            Navigator.pop(context);
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  });
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return new Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      new ListTile(
+                                        leading: new Icon(Icons.photo_camera),
+                                        title: new Text("Camera"),
+                                        onTap: () async {
+                                          File image =
+                                              await ImagePicker.pickImage(
+                                                  source: ImageSource.camera);
+                                          _imageFile =
+                                              await _compressAndGetFile(image);
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                      new ListTile(
+                                        leading: new Icon(Icons.photo_library),
+                                        title: new Text("Gallery"),
+                                        onTap: () async {
+                                          File image =
+                                              await ImagePicker.pickImage(
+                                                  source: ImageSource.gallery);
+                                          _imageFile =
+                                              await _compressAndGetFile(image);
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
                             },
-                          );
-                        }
-                      },
-                    ),
+                          ),
                   ),
                 ],
               ),

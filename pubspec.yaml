@@ -29,6 +29,7 @@ dependencies:
   photo: ^0.3.3
   flutter_spinkit: "^3.1.0"
   cached_network_image: ^0.7.0
+  flutter_image_compress: ^0.2.4
 
 dev_dependencies:
   flutter_test:
