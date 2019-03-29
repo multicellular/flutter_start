@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 // import 'dart:convert';
-import './blog/blog.dart';
+import '../blog_page/blog_book.dart';
 import './register.dart';
-
-import './models/config.dart';
+import '../models/config.dart';
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
 Dio dio = new Dio();

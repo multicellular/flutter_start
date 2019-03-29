@@ -1,0 +1,181 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import '../component/photo_view.dart';
+import '../component/video_player.dart';
+import '../models/config.dart';
+
+
+var urlPath = DefaultConfig.urlPath;
+var baseUrl = DefaultConfig.baseUrl;
+class BuildBlog extends StatelessWidget {
+  final dynamic blog;
+  final String type;
+  final bool showHeader;
+  static const String normal_blog = 'normal_blog';
+  static const String forward_blog = 'forward_blog';
+  static const String my_blog = 'my_blog';
+
+  BuildBlog({this.blog, this.type, this.showHeader = true});
+
+  Widget _initMediaWidget(
+      String mediaType, String mediaUrls, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        mediaType == 'image'
+            ? _previewImage(mediaUrls, context)
+            : _previewVideo(mediaUrls, context);
+      },
+      child: Container(
+        margin: EdgeInsets.all(2),
+        child: mediaType == 'image'
+            ? _initImages(mediaUrls)
+            : Image.asset('assets/images/video_default.jpg'),
+      ),
+    );
+  }
+
+  _previewImage(String imageUrls, BuildContext context) {
+    List images = [];
+    List viewImages = [];
+    if (imageUrls.isNotEmpty) {
+      images = imageUrls.split(',');
+    }
+    for (var image in images) {
+      viewImages.add(urlPath + image);
+    }
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return PhotoViewPage(viewImages);
+          },
+          fullscreenDialog: true,
+        ));
+  }
+
+  _previewVideo(String url, BuildContext context) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            // return PhotoViewPage(images);
+            return VideoApp(urlPath + url);
+          },
+          fullscreenDialog: true,
+        ));
+  }
+
+  Widget _initImages(String imagesStr) {
+    List images = [];
+    if (imagesStr.isNotEmpty) {
+      images = imagesStr.split(',');
+    }
+    var len = images.length;
+    if (len == 0) {
+      return Container();
+    }
+    List<Widget> widgets = <Widget>[];
+    for (var image in images) {
+      Widget widget = new Image(
+          image: new CachedNetworkImageProvider(urlPath + image),
+          // image: NetworkImage(urlPath + image),
+          width: 100,
+          height: 100,
+          fit: BoxFit.cover);
+      widgets.add(widget);
+    }
+    return GridView.count(
+      crossAxisCount: images.length > 2 ? 3 : images.length,
+      // crossAxisCount: 3,
+      mainAxisSpacing: 2,
+      crossAxisSpacing: 2,
+      childAspectRatio: images.length > 2 ? 1 : 3 / 2,
+      shrinkWrap: true, //增加
+      physics: new NeverScrollableScrollPhysics(), //增加
+      children: widgets,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String sourceUname = blog['uname'];
+    String forwardComment = '';
+    if (blog['forwardObj'] != null &&
+        blog['forwardObj']['source_uid'] != null) {
+      sourceUname = blog['forwardObj']['source_uname'];
+      forwardComment = blog['forwardObj']['forward_comment'];
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        // 博客标题 头像、名称、时间，showHeader控制是否展示
+        showHeader
+            ? Row(
+                children: <Widget>[
+                  CircleAvatar(
+                    // backgroundImage: NetworkImage(urlPath + blog['uavator']),
+                    backgroundImage: new CachedNetworkImageProvider(
+                        urlPath + blog['uavator']),
+                    // child: Text(blog['uname']),
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(left: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          blog['uname'],
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          blog['moment'],
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            : Container(),
+        // 评论内容 转发时的评�� type区分是否为转发
+        type == BuildBlog.forward_blog
+            ? Container(
+                child: Text(
+                  forwardComment,
+                  style: TextStyle(fontSize: 20),
+                ),
+              )
+            : Container(),
+        // 博客内容 转发时内容+@name type区分是否为转发
+        Container(
+          margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+          child: Text(
+            type == BuildBlog.forward_blog
+                ? '@$sourceUname//' + blog['content']
+                : blog['content'],
+            style: TextStyle(fontSize: 20),
+          ),
+        ),
+        // 博客媒资 media_type区分 图片或视频或文件
+        _initMediaWidget(blog['media_type'], blog['media_urls'], context),
+        // 博客时间 暂用于我的博客 type区分是否个人博客
+        type == BuildBlog.my_blog
+            ? Row(
+                children: <Widget>[
+                  Container(
+                    margin: EdgeInsets.only(top: 12),
+                    child: Text(blog['moment']),
+                  ),
+                ],
+                // Response response = await dio.get(
+                //         '$baseUrl/blog/deleteBlog',
+                //         queryParameters: {'blogid': blog['id']});
+                //     if (response.data['code'] == 0) {
+                //       _onPressed;
+                //     }
+              )
+            : Container()
+      ],
+    );
+  }
+}

@@ -5,11 +5,11 @@ import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
-import './blog/blog.dart';
+import '../blog_page/blog_book.dart';
 import './login.dart';
 // import 'dart:async';
 
-import './models/config.dart';
+import '../models/config.dart';
 
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);

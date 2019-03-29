@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import './src/ui/login.dart';
-import './src/ui/models/choice.dart';
+import './src/login_page/login.dart';
+import './src/models/choice.dart';
 
 void main() => runApp(MyApp());
 
