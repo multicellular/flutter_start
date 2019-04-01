@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 // import 'package:dio/dio.dart';
-import './src/login_page/login.dart';
+import './src/home_page/home.dart';
 
 // BaseOptions options = new BaseOptions(
 //   baseUrl: "http//localhost:3000/api",
@@ -20,6 +20,6 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: LoginPage());
+    return MaterialApp(home: HomePage());
   }
 }

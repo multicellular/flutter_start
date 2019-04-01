@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 // import 'dart:convert';
-import '../blog_page/blog_book.dart';
-import './register.dart';
+// import '../blog_page/blog_book.dart';
 import '../models/config.dart';
+import '../component/event_bus.dart';
+
+import './register.dart';
+
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
 Dio dio = new Dio();
@@ -31,10 +34,12 @@ class LoginPageState extends State<LoginPage> {
       String token = response.data['token'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setInt('uid', user['id']);
-      await prefs.setString('token', token);
-      Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return BlogPage();
-      }));
+      await prefs.setString('token', 'Bearer ${token}');
+      evtBus.emit('sigin_in');
+      Navigator.pop(context);
+      // Navigator.push(context, MaterialPageRoute(builder: (context) {
+      //   return BlogPage();
+      // }));
     }
   }
 

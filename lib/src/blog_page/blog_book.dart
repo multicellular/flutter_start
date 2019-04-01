@@ -6,6 +6,7 @@ import './blog_detail.dart';
 import './blog_send.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
+import '../home_page/home.dart';
 
 // BaseOptions options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
@@ -94,7 +95,11 @@ class BlogPageState extends State<BlogPage> {
               IconButton(
                 icon: Icon(Icons.home),
                 iconSize: 50,
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return HomePage();
+                  }));
+                },
               ),
               SizedBox(),
               IconButton(
@@ -194,12 +199,27 @@ class BlogPageState extends State<BlogPage> {
                                     IconButton(
                                       icon: Icon(Icons.comment),
                                       onPressed: () {
+                                        // Navigator.push(
+                                        //   context,
+                                        //   MaterialPageRoute(
+                                        //     builder: (context) {
+                                        //       // return PhotoViewPage(images);
+                                        //       return BlogDetailPage(blog);
+                                        //     },
+                                        //   ),
+                                        // );
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(
-                                            builder: (context) {
-                                              // return PhotoViewPage(images);
-                                              return BlogDetailPage(blog);
+                                          PageRouteBuilder(
+                                            // transitionDuration:
+                                            //     Duration(milliseconds: 500),
+                                            pageBuilder: (BuildContext context,
+                                                Animation animation,
+                                                Animation secondaryAnimation) {
+                                              return FadeTransition(
+                                                opacity: animation,
+                                                child: BlogDetailPage(blog),
+                                              );
                                             },
                                           ),
                                         );

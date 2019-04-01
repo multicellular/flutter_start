@@ -4,9 +4,9 @@ import '../component/photo_view.dart';
 import '../component/video_player.dart';
 import '../models/config.dart';
 
-
 var urlPath = DefaultConfig.urlPath;
 var baseUrl = DefaultConfig.baseUrl;
+
 class BuildBlog extends StatelessWidget {
   final dynamic blog;
   final String type;
@@ -26,7 +26,7 @@ class BuildBlog extends StatelessWidget {
             : _previewVideo(mediaUrls, context);
       },
       child: Container(
-        margin: EdgeInsets.all(2),
+        margin: EdgeInsets.all(10),
         child: mediaType == 'image'
             ? _initImages(mediaUrls)
             : Image.asset('assets/images/video_default.jpg'),
@@ -140,24 +140,37 @@ class BuildBlog extends StatelessWidget {
         // 评论内容 转发时的评�� type区分是否为转发
         type == BuildBlog.forward_blog
             ? Container(
-                child: Text(
-                  forwardComment,
-                  style: TextStyle(fontSize: 20),
-                ),
+                child: forwardComment.isNotEmpty
+                    ? Text(
+                        forwardComment,
+                        style: TextStyle(fontSize: 20),
+                      )
+                    : null,
               )
             : Container(),
-        // 博客内容 转发时内容+@name type区分是否为转发
+
         Container(
-          margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-          child: Text(
-            type == BuildBlog.forward_blog
-                ? '@$sourceUname//' + blog['content']
-                : blog['content'],
-            style: TextStyle(fontSize: 20),
+          color: type == BuildBlog.forward_blog
+              ? Colors.black12
+              : Colors.transparent,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // 博客内容 转发时内容+@name type区分是否为转发
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                child: Text(
+                  type == BuildBlog.forward_blog
+                      ? '@$sourceUname:' + blog['content']
+                      : blog['content'],
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
+              // 博客媒资 media_type区分 图片或视频或文件
+              _initMediaWidget(blog['media_type'], blog['media_urls'], context),
+            ],
           ),
         ),
-        // 博客媒资 media_type区分 图片或视频或文件
-        _initMediaWidget(blog['media_type'], blog['media_urls'], context),
         // 博客时间 暂用于我的博客 type区分是否个人博客
         type == BuildBlog.my_blog
             ? Row(
@@ -174,7 +187,7 @@ class BuildBlog extends StatelessWidget {
                 //       _onPressed;
                 //     }
               )
-            : Container()
+            : Container(),
       ],
     );
   }

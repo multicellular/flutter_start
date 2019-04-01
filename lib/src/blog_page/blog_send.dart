@@ -336,23 +336,20 @@ class ForwardBlogDialog extends StatelessWidget {
 
   _forwardBlog(BuildContext context) async {
     String comment = _commentController.text;
-    if (comment == null || comment.isEmpty) {
-      return;
-    }
+    // if (comment == null || comment.isEmpty) {
+    //   return;
+    // }
     int sourceId;
-    if (blog['source_id'] == null) {
-      sourceId = blog['id'];
+    if (blog['forwardObj'] != null && blog['forwardObj']['source_id'] != null) {
+      sourceId = blog['forwardObj']['source_id'];
     } else {
-      sourceId = blog['source_id'];
+      sourceId = blog['id'];
     }
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int uid = await prefs.get('uid');
     // data: { title, content, media_urls, media_type, uid, forward_comment, source_id, is_private }
-    Response result = await dio.post('$baseUrl/blog/postblog', data: {
-      'forward_comment': _commentController.text,
-      'uid': uid,
-      'source_id': sourceId
-    });
+    Response result = await dio.post('$baseUrl/blog/postblog',
+        data: {'forward_comment': comment, 'uid': uid, 'source_id': sourceId});
     if (result.data['code'] == 0) {
       Navigator.pop(context, result.data['blog']);
     }

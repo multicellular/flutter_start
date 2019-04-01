@@ -5,11 +5,9 @@ import 'package:dio/dio.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
 
-
 Dio dio = new Dio();
 var urlPath = DefaultConfig.urlPath;
 var baseUrl = DefaultConfig.baseUrl;
-
 
 class BlogDetailPage extends StatefulWidget {
   final dynamic blog;
@@ -144,10 +142,10 @@ class BlogDetailPageState extends State<BlogDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               BuildBlog(
-                  blog: widget.blog,
-                  type: isForward
-                      ? BuildBlog.forward_blog
-                      : BuildBlog.normal_blog),
+                blog: widget.blog,
+                type:
+                    isForward ? BuildBlog.forward_blog : BuildBlog.normal_blog,
+              ),
               Container(
                 margin: EdgeInsets.only(top: 12),
                 child: Text('comments'),
