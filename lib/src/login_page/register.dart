@@ -79,9 +79,9 @@ class RegisterPageState extends State<RegisterPage> {
     var result = await FlutterImageCompress.compressAndGetFile(
       file.absolute.path,
       file.absolute.path,
-      minWidth: 70,
-      minHeight: 70,
-      quality: 94,
+      minWidth: 100,
+      minHeight: 100,
+      quality: 100,
       rotate: 90,
     );
     // print(file.lengthSync());

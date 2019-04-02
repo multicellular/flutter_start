@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,7 +7,7 @@ import '../login_page/login.dart';
 // import '../login_page/register.dart';
 import '../component/event_bus.dart';
 import '../models/config.dart';
-import '../login_page/setting.dart';
+import '../login_page/profile.dart';
 import '../blog_page/blog_book.dart';
 
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
@@ -84,7 +85,9 @@ class HomePageState extends State<HomePage> {
           ? GestureDetector(
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return SettingPage(_profile);
+                  return ProfilePage.withProfile(
+                      {'uid': _profile['id'], 'uavator': _profile['avator']},
+                      personal: true);
                 }));
               },
               child: Hero(
@@ -93,8 +96,18 @@ class HomePageState extends State<HomePage> {
                   child: SizedBox(
                     width: 60.0,
                     height: 60.0,
-                    child: Image.network(urlPath + _profile['avator'],
-                        fit: BoxFit.cover),
+                    // child: Image.network(urlPath + _profile['avator'],
+                    //     fit: BoxFit.cover),
+                    child: CachedNetworkImage(
+                      fit: BoxFit.cover,
+                      placeholder: (context, string) {
+                        return Image.asset('assets/images/no_avatar.jpeg');
+                      },
+                      // errorWidget: (context, string, obj) {
+                      //   return Image.asset('assets/images/no_avatar.jpeg');
+                      // },
+                      imageUrl: urlPath + _profile['avator'],
+                    ),
                   ),
                 ),
               ),

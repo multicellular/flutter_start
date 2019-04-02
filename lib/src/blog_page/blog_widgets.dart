@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../login_page/profile.dart';
 import '../component/photo_view.dart';
 import '../component/video_player.dart';
 import '../models/config.dart';
@@ -16,6 +18,32 @@ class BuildBlog extends StatelessWidget {
   static const String my_blog = 'my_blog';
 
   BuildBlog({this.blog, this.type, this.showHeader = true});
+
+  Widget _initContentWidget({uname = '', int uid, BuildContext context}) {
+    // 博客内容 转发时内容+@name type区分是否为转发
+    // TODO 此次无法销毁_tapGestureRecognizer，可能会内存泄露，后期修正
+    TapGestureRecognizer _tapGestureRecognizer = new TapGestureRecognizer();
+    Widget text = type == BuildBlog.forward_blog
+        ? Text.rich(TextSpan(children: [
+            TextSpan(
+              text: '@$uname:',
+              style: TextStyle(color: Colors.blue),
+              recognizer: _tapGestureRecognizer
+                ..onTap = () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return ProfilePage(uid);
+                  }));
+                },
+            ),
+            TextSpan(text: blog['content']),
+          ]))
+        : Text(blog['content']);
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+      child:
+          (blog['content'] == null || blog['content'].isNotEmpty) ? text : null,
+    );
+  }
 
   Widget _initMediaWidget(
       String mediaType, String mediaUrls, BuildContext context) {
@@ -76,12 +104,24 @@ class BuildBlog extends StatelessWidget {
     }
     List<Widget> widgets = <Widget>[];
     for (var image in images) {
-      Widget widget = new Image(
-          image: new CachedNetworkImageProvider(urlPath + image),
-          // image: NetworkImage(urlPath + image),
-          width: 100,
-          height: 100,
-          fit: BoxFit.cover);
+      // Widget widget = new Image(
+      //     image: new CachedNetworkImageProvider(urlPath + image),
+      //     // image: NetworkImage(urlPath + image),
+      //     width: 100,
+      //     height: 100,
+      //     fit: BoxFit.cover);
+      Widget widget = new CachedNetworkImage(
+        // width: 100,
+        // height: 100,
+        // fit: BoxFit.cover,
+        placeholder: (context, string) {
+          return Image.asset('assets/images/no_image.jpeg');
+        },
+        errorWidget: (context, string, obj) {
+          return Image.asset('assets/images/no_image.jpeg');
+        },
+        imageUrl: urlPath + image,
+      );
       widgets.add(widget);
     }
     return GridView.count(
@@ -99,10 +139,11 @@ class BuildBlog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String sourceUname = blog['uname'];
+    int scurceUid;
     String forwardComment = '';
-    if (blog['forwardObj'] != null &&
-        blog['forwardObj']['source_uid'] != null) {
+    if (blog['forwardObj'] != null && blog['forwardObj']['source_id'] != null) {
       sourceUname = blog['forwardObj']['source_uname'];
+      scurceUid = blog['forwardObj']['source_uid'];
       forwardComment = blog['forwardObj']['forward_comment'];
     }
     return Column(
@@ -112,19 +153,42 @@ class BuildBlog extends StatelessWidget {
         showHeader
             ? Row(
                 children: <Widget>[
-                  CircleAvatar(
-                    // backgroundImage: NetworkImage(urlPath + blog['uavator']),
-                    backgroundImage: new CachedNetworkImageProvider(
-                        urlPath + blog['uavator']),
-                    // child: Text(blog['uname']),
+                  ClipOval(
+                    child: SizedBox(
+                      width: 40.0,
+                      height: 40.0,
+                      // child: Image.network(urlPath + _profile['avator'],
+                      //     fit: BoxFit.cover),
+                      child: CachedNetworkImage(
+                        fit: BoxFit.cover,
+                        placeholder: (context, string) {
+                          return Image.asset('assets/images/no_avatar.jpeg');
+                        },
+                        errorWidget: (context, string, obj) {
+                          return Image.asset('assets/images/no_avatar.jpeg');
+                        },
+                        imageUrl: urlPath +
+                            (blog['uavator'] == null
+                                ? 'null'
+                                : blog['uavator']),
+                      ),
+                    ),
                   ),
+                  // CircleAvatar(
+                  //   // backgroundImage: NetworkImage(urlPath + blog['uavator']),
+                  //   backgroundImage: blog['uavator'] != null
+                  //       ? new CachedNetworkImageProvider(
+                  //           urlPath + blog['uavator'])
+                  //       : AssetImage('assets/images/no_avatar.jpeg'),
+                  //   // child: Text(blog['uname']),
+                  // ),
                   Container(
                     margin: EdgeInsets.only(left: 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          blog['uname'],
+                          blog['uname'] != null ? blog['uname'] : '',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Text(
@@ -148,30 +212,22 @@ class BuildBlog extends StatelessWidget {
                     : null,
               )
             : Container(),
-
         Container(
           color: type == BuildBlog.forward_blog
-              ? Colors.black12
+              ? const Color(0XFFf5f5f5)
               : Colors.transparent,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               // 博客内容 转发时内容+@name type区分是否为转发
-              Container(
-                margin: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-                child: Text(
-                  type == BuildBlog.forward_blog
-                      ? '@$sourceUname:' + blog['content']
-                      : blog['content'],
-                  style: TextStyle(fontSize: 20),
-                ),
-              ),
+              _initContentWidget(
+                  uname: sourceUname, uid: scurceUid, context: context),
               // 博客媒资 media_type区分 图片或视频或文件
               _initMediaWidget(blog['media_type'], blog['media_urls'], context),
             ],
           ),
         ),
-        // 博客时间 暂用于我的博客 type区分是否个人博客
+        // 博客时间 暂用于我的博客 type区分��否个人博客
         type == BuildBlog.my_blog
             ? Row(
                 children: <Widget>[
