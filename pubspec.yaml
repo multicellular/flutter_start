@@ -30,6 +30,7 @@ dependencies:
   flutter_spinkit: "^3.1.0"
   cached_network_image: ^0.7.0
   flutter_image_compress: ^0.2.4
+  web_socket_channel: ^1.0.12
 
 dev_dependencies:
   flutter_test:
@@ -53,6 +54,7 @@ flutter:
    - assets/images/video_default.jpg
    - assets/images/no_image.jpeg
    - assets/images/no_avatar.jpeg
+   - assets/images/blog_icon.png
   #  - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

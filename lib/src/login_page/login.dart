@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 // import '../blog_page/blog_book.dart';
 import '../models/config.dart';
 import '../component/event_bus.dart';
+import '../home_page/home.dart';
 
 import './register.dart';
 
@@ -36,10 +37,14 @@ class LoginPageState extends State<LoginPage> {
       await prefs.setInt('uid', user['id']);
       await prefs.setString('token', 'Bearer ${token}');
       evtBus.emit('sigin_in');
-      Navigator.pop(context);
-      // Navigator.push(context, MaterialPageRoute(builder: (context) {
-      //   return BlogPage();
-      // }));
+      if (context.toString().indexOf('LoginPage') > -1 ||
+          context.toString().indexOf('RegisterPage') > -1) {
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+          return HomePage();
+        }));
+      } else {
+        Navigator.pop(context);
+      }
     }
   }
 

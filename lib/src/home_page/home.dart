@@ -3,8 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../chat_page/chat_room.dart';
 import '../login_page/login.dart';
-// import '../login_page/register.dart';
 import '../component/event_bus.dart';
 import '../models/config.dart';
 import '../login_page/profile.dart';
@@ -24,6 +24,7 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   var _profile;
+  // var _applys = [];
   // GlobalKey _fromKey = new GlobalKey();
 
   @override
@@ -31,6 +32,7 @@ class HomePageState extends State<HomePage> {
     super.initState();
     _initEvent();
     _initProfile();
+    _initNotification();
   }
 
   _initProfile() async {
@@ -59,20 +61,137 @@ class HomePageState extends State<HomePage> {
     });
   }
 
+  _initNotification() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int uid = await prefs.getInt('uid');
+    Response response = await dio
+        .get('$baseUrl/room/findApply', queryParameters: {'invitees_uid': uid});
+    if (response.data['code'] == 0 && response.data['applys'].length > 0) {
+      var _applys = response.data['applys'];
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text('好友申请'),
+              children: <Widget>[
+                Container(
+                  width: 200,
+                  height: 300,
+                  child: ListView.separated(
+                    itemCount: _applys.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      var apply = _applys[index];
+                      return Row(
+                        children: <Widget>[
+                          Text(apply['verify_message'] != null
+                              ? apply['verify_message']
+                              : ''),
+                          IconButton(
+                            icon: Icon(Icons.close),
+                            onPressed: () async {
+                              Response result = await dio.post(
+                                '$baseUrl/room/ignoreApply',
+                                data: {'applyid': apply['id']},
+                              );
+                              if (result.data['code'] == 0) {
+                                _applys.removeAt(index);
+                                if (_applys.length == 0) {
+                                  Navigator.pop(context);
+                                }
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.check),
+                            onPressed: () async {
+                              Response result = await dio.post(
+                                '$baseUrl/room/allowJoinFriend',
+                                data: {
+                                  'apply_uid': apply['apply_uid'],
+                                  'apply_flist_id': apply['apply_flist_id'],
+                                  'invitees_uid': apply['invitees_uid'],
+                                  'invitees_flist_id':
+                                      apply['invitees_flist_id'],
+                                  'applyId': apply['id']
+                                },
+                              );
+                              if (result.data['code'] == 0) {
+                                _applys.removeAt(index);
+                                if (_applys.length == 0) {
+                                  Navigator.pop(context);
+                                }
+                              }
+                            },
+                          )
+                        ],
+                      );
+                    },
+                    separatorBuilder: (BuildContext context, int index) {},
+                  ),
+                ),
+              ],
+            );
+          });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // final TextStyle textStyle = Theme.of(context).textTheme.display1;
     return Scaffold(
-      // bottomSheet: Container(
-      //   decoration: BoxDecoration(color: Colors.red[50]),
-      //   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-      //   child: Row(
-      //     children: <Widget>[
-      //       buildUser(),
-      //       _profile != null ? Text(_profile['name']) : Container()
-      //     ],
-      //   ),
-      // ),
+      //   bottomSheet: Container(
+      //       decoration: BoxDecoration(color: Colors.red[50]),
+      //       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+      //       child: ListView.separated(
+      //         itemCount: _applys.length,
+      //         itemBuilder: (BuildContext context, int index) {
+      //           var apply = _applys[index];
+      //           return Row(
+      //             children: <Widget>[
+      //               Text(apply['verify_message'] != null
+      //                   ? apply['verify_message']
+      //                   : ''),
+      //               IconButton(
+      //                 icon: Icon(Icons.close),
+      //                 onPressed: () async {
+      //                   Response result = await dio.post(
+      //                     '$baseUrl/room/ignoreApply',
+      //                     data: {'applyid': apply['id']},
+      //                   );
+      //                   if (result.data['code'] == 0) {
+      //                     _applys.removeAt(index);
+      //                     if (_applys.length == 0) {
+      //                       Navigator.pop(context);
+      //                     }
+      //                   }
+      //                 },
+      //               ),
+      //               IconButton(
+      //                 icon: Icon(Icons.check),
+      //                 onPressed: () async {
+      //                   Response result = await dio.post(
+      //                     '$baseUrl/room/allowJoinFriend',
+      //                     data: {
+      //                       'apply_uid': apply['apply_uid'],
+      //                       'apply_flist_id': apply['apply_flist_id'],
+      //                       'invitees_uid': apply['invitees_uid'],
+      //                       'invitees_flist_id': apply['invitees_flist_id'],
+      //                       'applyId': apply['id']
+      //                     },
+      //                   );
+      //                   if (result.data['code'] == 0) {
+      //                     _applys.removeAt(index);
+      //                     if (_applys.length == 0) {
+      //                       Navigator.pop(context);
+      //                     }
+      //                   }
+      //                 },
+      //               )
+      //             ],
+      //           );
+      //         },
+      //         separatorBuilder: (BuildContext context, int index) {},
+      //       )),
       floatingActionButton: _profile != null
           // ? ClipOval(
           //     child: SizedBox(
@@ -197,19 +316,51 @@ class HomePageState extends State<HomePage> {
               Row(
                 children: <Widget>[
                   Text(
-                    'BLOG PAGE: ',
+                    'GO TO PAGE: ',
                     style: TextStyle(color: Colors.black45, fontSize: 18),
                   ),
-                  Card(
-                    child: IconButton(
-                      icon: Icon(Icons.pages),
-                      onPressed: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) {
-                          return BlogPage();
-                        }));
-                      },
+                  // Card(
+                  // child: GestureDetector(
+                  //   onTap: () {
+                  //     Navigator.push(context,
+                  //         MaterialPageRoute(builder: (context) {
+                  //       return BlogPage();
+                  //     }));
+                  //   },
+                  //   child: Image.asset(
+                  //     'assets/images/blog_icon.png',
+                  //     width: 60,
+                  //     height: 60,
+                  //   ),
+                  // ),
+                  // ),
+                  IconButton(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    icon: Icon(
+                      Icons.mode_edit,
+                      size: 50,
+                      color: Colors.lightBlue,
                     ),
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return BlogPage();
+                      }));
+                    },
+                  ),
+                  IconButton(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    icon: Icon(
+                      Icons.mode_comment,
+                      size: 50,
+                      color: Colors.lightBlue,
+                    ),
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return ChatRoomPage();
+                      }));
+                    },
                   ),
                 ],
               ),

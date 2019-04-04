@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../component/event_bus.dart';
+import '../home_page/home.dart';
 
 // import '../blog_page/blog_book.dart';
 import './login.dart';
@@ -58,7 +59,14 @@ class RegisterPageState extends State<RegisterPage> {
       await prefs.setInt('uid', user['id']);
       await prefs.setString('token', 'Bearer ${token}');
       evtBus.emit('sigin_in');
-      Navigator.pop(context);
+      if (context.toString().indexOf('LoginPage') > -1 ||
+          context.toString().indexOf('RegisterPage') > -1) {
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+          return HomePage();
+        }));
+      } else {
+        Navigator.pop(context);
+      }
     }
   }
 
