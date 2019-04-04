@@ -63,7 +63,7 @@ class ChatGroupPageState extends State<ChatGroupPage> {
     uid = await prefs.getInt('uid');
     if (uid != null) {
       message = Message(type: 'server', content: 'connect', sendid: uid);
-      _channel = IOWebSocketChannel.connect('ws://localhost:3001');
+      _channel = IOWebSocketChannel.connect(socketPath);
       _channel.sink.add(message.toString());
       _channel.stream.listen((message) {
         setState(() {
