@@ -7,7 +7,7 @@ import './blog_send.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
 import '../home_page/home.dart';
-import '../chat_page/chat_room.dart';
+// import '../chat_page/chat_room.dart';
 
 // BaseOptions options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
@@ -107,9 +107,9 @@ class BlogPageState extends State<BlogPage> {
                 icon: Icon(Icons.group),
                 iconSize: 50,
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return ChatRoomPage();
-                  }));
+                  // Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  //   return ChatRoomPage();
+                  // }));
                 },
               )
             ],
