@@ -1,9 +1,12 @@
 import 'dart:async';
-
+import 'dart:convert';
 // import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as Path;
+
 import '../models/config.dart';
 import './chat_group.dart';
 
@@ -23,6 +26,7 @@ class Room {
   final bool isChat;
   final dynamic roomUsers;
   final int chatid;
+  final dynamic message;
   Room(
       {this.id,
       this.name,
@@ -32,6 +36,7 @@ class Room {
       this.moment,
       this.isChat,
       this.chatid,
+      this.message,
       this.roomUsers});
 
   Room.fromJson(Map<String, dynamic> json)
@@ -43,6 +48,7 @@ class Room {
         moment = json['moment'],
         isChat = json['isChat'],
         chatid = json['chatid'],
+        message = json['message'],
         roomUsers = json['room_users'];
 }
 
@@ -54,6 +60,8 @@ class ChatRoomPage extends StatefulWidget {
 class ChatRoomPageState extends State<ChatRoomPage> {
   List<Room> _rooms = [];
   int uid;
+  Database _db;
+  List _localMessage = [];
 
   _initRooms() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -67,6 +75,8 @@ class ChatRoomPageState extends State<ChatRoomPage> {
     List tempChats = response[1].data['chats'];
     tempChats.addAll(tempRooms);
     for (var room in tempChats) {
+      var message = await _initRoomMessages(room);
+      room['message'] = message;
       _temps.add(Room.fromJson(room));
     }
     setState(() {
@@ -74,16 +84,38 @@ class ChatRoomPageState extends State<ChatRoomPage> {
     });
   }
 
+  _initDatabase() async {
+    var databasePath = await getDatabasesPath();
+    String path = Path.join(databasePath, 'message.db');
+    _db = await openDatabase(path, version: 1);
+  }
+
+  _initRoomMessages(room) async {
+    List results = await _db.query('local_messages',
+        columns: ['msg'],
+        where: '"groupid"=?',
+        whereArgs: [room['id']],
+        orderBy: 'localid desc',
+        limit: 1);
+    if (results.isNotEmpty) {
+      return json.decode(results[0]['msg']);
+    } else {
+      return {'content': '', 'moment': ''};
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _initDatabase();
     _initRooms();
   }
 
   @override
   void dispose() {
     super.dispose();
+    _db.close();
   }
 
   @override
@@ -109,8 +141,8 @@ class ChatRoomPageState extends State<ChatRoomPage> {
                       fit: BoxFit.cover,
                     ),
                     title: Text(room.name),
-                    subtitle: Text('lastMessage.content'),
-                    trailing: Text('lastMessage.time'),
+                    subtitle: Text(room.message['content']),
+                    trailing: Text(room.message['moment']),
                     onTap: () async {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {

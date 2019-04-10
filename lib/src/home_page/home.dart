@@ -1,11 +1,14 @@
+// import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as Path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
+import 'package:sqflite/sqflite.dart';
 
 import '../component/event_bus.dart';
 import '../models/config.dart';
@@ -32,15 +35,31 @@ class HomePageState extends State<HomePage> {
   var _profile;
   IOWebSocketChannel _channel;
   List _messages = [];
-  // var _applys = [];
-  // GlobalKey _fromKey = new GlobalKey();
+  Database _db;
 
   @override
   void initState() {
     super.initState();
     _initEvent();
+    _initDatabase();
     _initProfile();
     _initNotification();
+  }
+
+  _initDatabase() async {
+    var databasePath = await getDatabasesPath();
+    String path = Path.join(databasePath, 'message.db');
+    _db = await openDatabase(path, version: 1, onCreate: (db, version) async {
+      await db.execute('''
+            create table local_messages(
+              localid integer primary key autoincrement,
+              msg text not null,
+              read integer not null default 0,
+              groupid integer,
+              private integer
+            )
+          ''');
+    });
   }
 
   _initProfile() async {
@@ -57,6 +76,12 @@ class HomePageState extends State<HomePage> {
             IOWebSocketChannel.connect(socketPath + '/connect/$connectid');
         _channel.sink.add('connect');
         _channel.stream.listen((message) {
+          var msg = json.decode(message);
+          _db.insert('local_messages', {
+            'msg': message,
+            'groupid': msg['roomid'],
+            'private': msg['private'] ? 1 : 0
+          });
           setState(() {
             _messages.add(json.decode(message));
           });
@@ -72,6 +97,7 @@ class HomePageState extends State<HomePage> {
   void dispose() {
     super.dispose();
     _channel.sink.close(status.goingAway);
+    _db.close();
   }
 
   _initEvent() {
@@ -169,7 +195,7 @@ class HomePageState extends State<HomePage> {
       String content = _messages.last['content'];
       widget = Container(
         color: Colors.white30,
-        margin: EdgeInsets.only(top:20),
+        margin: EdgeInsets.only(top: 20),
         child: new ListTile(title: new Text('$content')),
       );
       // String content = _messages.last['content'];

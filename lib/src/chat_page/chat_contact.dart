@@ -24,7 +24,7 @@ class ChatContactPageState extends State<ChatContactPage> {
 
   _initUsers() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    uid = await prefs.getInt('uid');
+    uid = prefs.getInt('uid');
     Response response = await dio
         .get('$baseUrl/room/getUserFriends', queryParameters: {'uid': uid});
     if (response.data['code'] == 0) {
@@ -62,7 +62,7 @@ class ChatContactPageState extends State<ChatContactPage> {
           IconButton(
             icon: Icon(Icons.add_circle_outline),
             onPressed: () {
-              showSearch(context: context, delegate: searchBarDelegate());
+              showSearch(context: context, delegate: SearchBarDelegate());
             },
           )
         ],
@@ -114,7 +114,7 @@ class ChatContactPageState extends State<ChatContactPage> {
   }
 }
 
-class searchBarDelegate extends SearchDelegate<String> {
+class SearchBarDelegate extends SearchDelegate<String> {
   List _searchUsers = [];
 
   TextEditingController _applyController = new TextEditingController();

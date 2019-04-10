@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as Path;
+
 import '../models/config.dart';
 import '../models/user.dart';
 
@@ -70,6 +73,7 @@ class ChatGroupPageState extends State<ChatGroupPage>
   TextEditingController _messageController = new TextEditingController();
   IOWebSocketChannel _channel;
   int uid;
+  Database _db;
 
   _initChannel() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -83,9 +87,11 @@ class ChatGroupPageState extends State<ChatGroupPage>
       // _channel.sink.add(_message.toString());
       _channel.sink.add('join');
       _channel.stream.listen((message) {
+        var msgJson = json.decode(message);
+        Message msg = Message.fromJson(msgJson);
         ChatMessage chatMessage = new ChatMessage(
-          message: Message.fromJson(json.decode(message)),
-          user: User().filterUser(uid, widget.roomUsers),
+          message: msg,
+          user: User().filterUser(msg.sendid, widget.roomUsers),
           animationController: new AnimationController(
               duration: new Duration(milliseconds: 700), vsync: this),
         );
@@ -93,7 +99,42 @@ class ChatGroupPageState extends State<ChatGroupPage>
           _messages.insert(0, chatMessage);
         });
         chatMessage.animationController.forward();
+        _db.insert('local_messages', {
+          'msg': message,
+          'groupid': msgJson['roomid'],
+          'private': msgJson['private'] ? 1 : 0,
+          'read': 1
+        });
       });
+    }
+  }
+
+  _initDatabase() async {
+    var databasePath = await getDatabasesPath();
+    String path = Path.join(databasePath, 'message.db');
+    _db = await openDatabase(path, version: 1);
+  }
+
+  _initRoomMessages() async {
+    await _initDatabase();
+    List results = await _db.query('local_messages',
+        columns: ['msg'],
+        where: '"groupid"=?',
+        whereArgs: [widget.roomid],
+        orderBy: 'localid desc',
+        limit: 12);
+    for (var result in results) {
+      Message msg = Message.fromJson(json.decode(result['msg']));
+      ChatMessage chatMessage = new ChatMessage(
+        message: msg,
+        user: User().filterUser(msg.sendid, widget.roomUsers),
+        animationController: new AnimationController(
+            duration: new Duration(milliseconds: 100), vsync: this),
+      );
+      setState(() {
+        _messages.add(chatMessage);
+      });
+      chatMessage.animationController.forward();
     }
   }
 
@@ -101,6 +142,7 @@ class ChatGroupPageState extends State<ChatGroupPage>
   void initState() {
     super.initState();
     _initChannel();
+    _initRoomMessages();
   }
 
   @override
@@ -111,6 +153,7 @@ class ChatGroupPageState extends State<ChatGroupPage>
     _channel.sink.close(status.goingAway);
     for (ChatMessage message in _messages)
       message.animationController.dispose();
+    _db.close();
   }
 
   _sendMessage() {
