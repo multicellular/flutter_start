@@ -26,7 +26,7 @@ class BlogPageState extends State<BlogPage> {
   Response response;
   ScrollController _controller = new ScrollController();
   bool isRefreshing = false;
-  CircularProgressIndicator progressIndicator = CircularProgressIndicator();
+  // CircularProgressIndicator progressIndicator = CircularProgressIndicator();
 
   _initData() async {
     setState(() {

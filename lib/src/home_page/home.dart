@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../component/event_bus.dart';
 import '../models/config.dart';
@@ -36,6 +37,7 @@ class HomePageState extends State<HomePage> {
   IOWebSocketChannel _channel;
   List _messages = [];
   Database _db;
+  var flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
@@ -43,12 +45,13 @@ class HomePageState extends State<HomePage> {
     _initEvent();
     _initDatabase();
     _initProfile();
-    _initNotification();
+    _initNotifications();
   }
 
   _initDatabase() async {
     var databasePath = await getDatabasesPath();
     String path = Path.join(databasePath, 'message.db');
+    // deleteDatabase(path);
     _db = await openDatabase(path, version: 1, onCreate: (db, version) async {
       await db.execute('''
             create table local_messages(
@@ -60,6 +63,56 @@ class HomePageState extends State<HomePage> {
             )
           ''');
     });
+  }
+
+  _initNotifications() {
+    var initializationSettingsAndroid =
+        new AndroidInitializationSettings('app_icon');
+    var initializationSettingsIOS = new IOSInitializationSettings(
+        onDidReceiveLocalNotification: _onDidRecieveLocalNotification);
+    var initializationSettings = new InitializationSettings(
+        initializationSettingsAndroid, initializationSettingsIOS);
+    flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: _onSelectNotification);
+  }
+
+  Future _onDidRecieveLocalNotification(
+      int id, String title, String body, String payload) {
+    // onDidRecieveLocalNotification 这个是IOS端接收到通知所作的处理的方法
+  }
+  Future _onSelectNotification(String payload) {
+    int localeID = int.parse(payload);
+    _cancelNotification(localeID);
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return ChatBookPage();
+    }));
+  }
+
+  Future _showNotification(
+      int localeID, String title, String conetnt, String payload) async {
+    //安卓的通知配置，必填参数是渠道id, 名称, 和描述, 可选填通知的图标，重要度等等。
+    var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
+        'id', 'name', 'description',
+        importance: Importance.Max, priority: Priority.High);
+    //IOS的通知配置
+    var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
+    var platformChannelSpecifics = new NotificationDetails(
+        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+    //显示通知，其中 0 代表通知的 id，用于区分通知。
+    await flutterLocalNotificationsPlugin.show(
+        localeID, title, conetnt, platformChannelSpecifics,
+        payload: payload);
+  }
+
+  //删除单个通知
+  Future _cancelNotification(id) async {
+    //参数 0 为需要删除的通知的id
+    await flutterLocalNotificationsPlugin.cancel(id);
+  }
+
+//删除所有通知
+  Future _cancelAllNotifications() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
   }
 
   _initProfile() async {
@@ -76,21 +129,26 @@ class HomePageState extends State<HomePage> {
             IOWebSocketChannel.connect(socketPath + '/connect/$connectid');
         _channel.sink.add('connect');
         _channel.stream.listen((message) {
-          var msg = json.decode(message);
-          _db.insert('local_messages', {
-            'msg': message,
-            'groupid': msg['roomid'],
-            'private': msg['private'] ? 1 : 0
-          });
           setState(() {
             _messages.add(json.decode(message));
           });
+          _handleMessage(message);
         });
         setState(() {
           _profile = user;
         });
       }
     }
+  }
+
+  _handleMessage(message) async {
+    var msgJson = json.decode(message);
+    int localeID = await _db.insert('local_messages', {
+      'msg': message,
+      'groupid': msgJson['roomid'],
+      'private': msgJson['private'] ? 1 : 0
+    });
+    _showNotification(localeID, '', msgJson['content'], localeID.toString());
   }
 
   @override

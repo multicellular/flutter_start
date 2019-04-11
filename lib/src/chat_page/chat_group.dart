@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as Path;
@@ -74,6 +76,10 @@ class ChatGroupPageState extends State<ChatGroupPage>
   IOWebSocketChannel _channel;
   int uid;
   Database _db;
+  bool _isLoadingMore = false;
+
+  ScrollController _controller = new ScrollController();
+  int _lastID;
 
   _initChannel() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -92,6 +98,7 @@ class ChatGroupPageState extends State<ChatGroupPage>
         ChatMessage chatMessage = new ChatMessage(
           message: msg,
           user: User().filterUser(msg.sendid, widget.roomUsers),
+          uid: uid,
           animationController: new AnimationController(
               duration: new Duration(milliseconds: 700), vsync: this),
         );
@@ -118,15 +125,18 @@ class ChatGroupPageState extends State<ChatGroupPage>
   _initRoomMessages() async {
     await _initDatabase();
     List results = await _db.query('local_messages',
-        columns: ['msg'],
+        columns: ['localid', 'msg'],
         where: '"groupid"=?',
         whereArgs: [widget.roomid],
         orderBy: 'localid desc',
         limit: 12);
+    if (results.isNotEmpty) _lastID = results.last['localid'];
+
     for (var result in results) {
       Message msg = Message.fromJson(json.decode(result['msg']));
       ChatMessage chatMessage = new ChatMessage(
         message: msg,
+        uid: uid,
         user: User().filterUser(msg.sendid, widget.roomUsers),
         animationController: new AnimationController(
             duration: new Duration(milliseconds: 100), vsync: this),
@@ -138,11 +148,52 @@ class ChatGroupPageState extends State<ChatGroupPage>
     }
   }
 
+  Future _getMoreMessages() async {
+    setState(() {
+      _isLoadingMore = true;
+    });
+    List results = await _db.query('local_messages',
+        columns: ['localid', 'msg'],
+        where: '"groupid"=? and "localid"<?',
+        whereArgs: [widget.roomid, _lastID],
+        orderBy: 'localid desc',
+        limit: 12);
+    if (results.isNotEmpty) {
+      _lastID = results.last['localid'];
+    }
+    for (var result in results) {
+      Message msg = Message.fromJson(json.decode(result['msg']));
+      ChatMessage chatMessage = new ChatMessage(
+        message: msg,
+        uid: uid,
+        user: User().filterUser(msg.sendid, widget.roomUsers),
+        animationController: new AnimationController(
+            duration: new Duration(milliseconds: 100), vsync: this),
+      );
+      setState(() {
+        _messages.add(chatMessage);
+      });
+      chatMessage.animationController.forward();
+    }
+    setState(() {
+      _isLoadingMore = false;
+    });
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     _initChannel();
     _initRoomMessages();
+    _controller.addListener(() {
+      var maxScroll = _controller.position.maxScrollExtent;
+      var pixel = _controller.position.pixels;
+      // 顶端下拉刷新数据
+      if (maxScroll == pixel && !_isLoadingMore) {
+        _getMoreMessages();
+      }
+    });
   }
 
   @override
@@ -154,6 +205,7 @@ class ChatGroupPageState extends State<ChatGroupPage>
     for (ChatMessage message in _messages)
       message.animationController.dispose();
     _db.close();
+    _controller.dispose();
   }
 
   _sendMessage() {
@@ -174,66 +226,83 @@ class ChatGroupPageState extends State<ChatGroupPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.roomName),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(10),
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              flex: 1,
-              child: ListView.builder(
-                reverse: true,
-                itemCount: _messages.length,
-                itemBuilder: (BuildContext context, int index) =>
-                    _messages[index],
-              ),
+        appBar: AppBar(
+          title: Text(widget.roomName),
+        ),
+        body: DecoratedBox(
+          decoration: BoxDecoration(
+            // image: Image.asset('assets/images/login_bg.jpg',fit: BoxFit.fill),
+            image: DecorationImage(
+              image: AssetImage('assets/images/chat_bg.jpeg'),
+              fit: BoxFit.fill,
             ),
-            // Expanded(
-            //   flex: 1,
-            //   child: StreamBuilder(
-            //     stream: _channel.stream,
-            //     builder: (BuildContext context, snapshot) {
-            //       return Text(snapshot.hasData ? '${snapshot.data}' : '');
-            //     },
-            //   ),
-            // ),
-            Row(
+            borderRadius: BorderRadius.circular(3.0), //3像素圆角
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(10),
+            child: Column(
               children: <Widget>[
-                IconButton(
-                  icon: Icon(Icons.file_upload),
-                  onPressed: () {},
-                ),
+                _isLoadingMore
+                    ? SpinKitCircle(
+                        color: Colors.blue,
+                        size: 50.0,
+                      )
+                    : Container(),
                 Expanded(
                   flex: 1,
-                  child: Form(
-                    child: TextFormField(
-                      controller: _messageController,
-                      decoration:
-                          new InputDecoration(hintText: 'Send a message'),
-                    ),
-                  ),
+                  child: ListView.builder(
+                      reverse: true,
+                      itemCount: _messages.length,
+                      controller: _controller,
+                      itemBuilder: (BuildContext context, int index) =>
+                          _messages[index]),
                 ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: () {
-                    _sendMessage();
-                  },
+                // Expanded(
+                //   flex: 1,
+                //   child: StreamBuilder(
+                //     stream: _channel.stream,
+                //     builder: (BuildContext context, snapshot) {
+                //       return Text(snapshot.hasData ? '${snapshot.data}' : '');
+                //     },
+                //   ),
+                // ),
+                Row(
+                  children: <Widget>[
+                    IconButton(
+                      icon: Icon(Icons.file_upload),
+                      onPressed: () {},
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Form(
+                        child: TextFormField(
+                          controller: _messageController,
+                          decoration:
+                              new InputDecoration(hintText: 'Send a message'),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.send),
+                      onPressed: () {
+                        _sendMessage();
+                      },
+                    )
+                  ],
                 )
               ],
-            )
-          ],
-        ),
-      ),
-    );
+            ),
+          ),
+        ));
   }
 }
 
 class ChatMessage extends StatelessWidget {
-  ChatMessage({this.message, this.animationController, @required this.user});
+  ChatMessage(
+      {this.message, this.animationController, @required this.user, this.uid});
   final Message message;
   final User user;
+  final uid;
   final AnimationController animationController;
 
   Widget build(BuildContext context) {
@@ -242,24 +311,49 @@ class ChatMessage extends StatelessWidget {
           parent: animationController, curve: Curves.easeOut),
       axisAlignment: 0.0,
       child: new Container(
+        // color: Colors.red,
         margin: const EdgeInsets.symmetric(vertical: 10.0),
         child: new Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          // textDirection: TextDirection.rtl,
+          textDirection:
+              user.uid == uid ? TextDirection.rtl : TextDirection.ltr,
           children: <Widget>[
             new Container(
-              margin: const EdgeInsets.only(right: 16.0),
+              // color: Colors.white,
+              padding: const EdgeInsets.only(right: 8.0, left: 8.0),
               child: new CircleAvatar(
                   backgroundImage: new NetworkImage(urlPath + user.uavator)),
             ),
             new Expanded(
               child: new Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                textDirection:
+                    user.uid == uid ? TextDirection.rtl : TextDirection.ltr,
                 children: <Widget>[
-                  new Text(user.uname,
-                      style: Theme.of(context).textTheme.subhead),
+                  // new Text(user.uname,
+                  //     style: Theme.of(context).textTheme.subhead),
                   new Container(
-                    margin: const EdgeInsets.only(top: 5.0),
+                    margin: EdgeInsets.only(top: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.lightGreenAccent,
+                      // image: Image.asset('assets/images/login_bg.jpg',fit: BoxFit.fill),
+                      image: DecorationImage(
+                        image: AssetImage(user.uid == uid
+                            ? 'assets/images/text_bg_rtl.jpeg'
+                            : 'assets/images/text_bg_ltr.jpeg'),
+                        fit: BoxFit.fill,
+                      ),
+                      borderRadius: BorderRadius.circular(3.0), //3像素圆角
+                      boxShadow: [
+                        //阴影
+                        BoxShadow(
+                            color: Colors.black54,
+                            offset: Offset(2.0, 2.0),
+                            blurRadius: 4.0)
+                      ],
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: message.type == 'image'
                         ? Image.network(message.content)
                         : new Text(message.content),

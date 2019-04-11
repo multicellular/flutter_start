@@ -142,7 +142,14 @@ class ChatRoomPageState extends State<ChatRoomPage> {
                     ),
                     title: Text(room.name),
                     subtitle: Text(room.message['content']),
-                    trailing: Text(room.message['moment']),
+                    trailing: Text(
+                      room.message['moment'].toString().isNotEmpty
+                          ? DateTime.fromMillisecondsSinceEpoch(
+                              int.parse(room.message['moment']),
+                              // isUtc: true,
+                            ).toString().substring(0,16)
+                          : '',
+                    ),
                     onTap: () async {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
