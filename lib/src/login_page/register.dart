@@ -195,7 +195,7 @@ class RegisterPageState extends State<RegisterPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Container(
-                        width: 200,
+                        width: 150,
                         margin: EdgeInsets.only(right: 40),
                         child: RaisedButton(
                           color: Colors.blue,

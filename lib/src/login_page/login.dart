@@ -73,7 +73,7 @@ class LoginPageState extends State<LoginPage> {
             ],
           ),
           child: Container(
-            margin: EdgeInsets.only(top: 100, left: 20, right: 20),
+            margin: EdgeInsets.only(top: 20, left: 20, right: 20),
             child: Form(
               // key: _fromKey,
               child: Column(
@@ -100,7 +100,7 @@ class LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         Container(
-                          width: 200,
+                          width: 150,
                           child: RaisedButton(
                             color: Colors.blue,
                             highlightColor: Colors.blue[700],
