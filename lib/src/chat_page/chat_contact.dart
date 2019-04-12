@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/config.dart';
 import '../models/user.dart';
 import './chat_group.dart';
+import './call.dart';
 
 Dio dio = new Dio();
 // dio.options.baseUrl = 'localhost:3000/api';
@@ -330,6 +331,16 @@ class RoomDetailPageState extends State<RoomDetailPage> {
                       private: widget.room['isChat'],
                       roomName: widget.room['name'],
                       roomUsers: widget.room['room_users']);
+                }));
+              },
+            ),
+            RaisedButton(
+              child: Text('视频聊天'),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return CallPage(
+                    channelName: widget.roomid.toString(),
+                  );
                 }));
               },
             )

@@ -35,7 +35,7 @@ class LoginPageState extends State<LoginPage> {
       String token = response.data['token'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setInt('uid', user['id']);
-      await prefs.setString('token', 'Bearer ${token}');
+      await prefs.setString('token', 'Bearer $token');
       evtBus.emit('sigin_in');
       if (context.toString().indexOf('LoginPage') > -1 ||
           context.toString().indexOf('RegisterPage') > -1) {
