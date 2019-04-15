@@ -236,12 +236,12 @@ class _CallPageState extends State<CallPage> {
             onPressed: () => _onToggleMute(),
             child: new Icon(
               muted ? Icons.mic : Icons.mic_off,
-              color: muted ? Colors.white : Colors.blueAccent,
+              color: muted ? Colors.white : Colors.white,
               size: 20.0,
             ),
             shape: new CircleBorder(),
             elevation: 2.0,
-            fillColor: muted ? Colors.blueAccent : Colors.white,
+            fillColor: muted ? Colors.blueAccent : Colors.redAccent,
             padding: const EdgeInsets.all(12.0),
           ),
           RawMaterialButton(

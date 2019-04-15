@@ -18,6 +18,7 @@ import '../login_page/login.dart';
 import '../login_page/profile.dart';
 import '../blog_page/blog_book.dart';
 import '../chat_page/chat_book.dart';
+import '../chat_page/call.dart';
 
 // Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
 // Dio dio = new Dio(options);
@@ -46,6 +47,7 @@ class HomePageState extends State<HomePage> {
     _initDatabase();
     _initProfile();
     _initNotifications();
+    _initApply();
   }
 
   _initDatabase() async {
@@ -129,10 +131,47 @@ class HomePageState extends State<HomePage> {
             IOWebSocketChannel.connect(socketPath + '/connect/$connectid');
         _channel.sink.add('connect');
         _channel.stream.listen((message) {
-          setState(() {
-            _messages.add(json.decode(message));
-          });
-          _handleMessage(message);
+          var msgJson = json.decode(message);
+          if (msgJson['type'] == 'apply') {
+            // 好友申请监听
+            _initApply();
+          } else if (msgJson['type'] == 'call') {
+            // 视频通话监听
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return SimpleDialog(
+                    title: Text('视频聊天'),
+                    children: <Widget>[
+                      Text(msgJson['sendid'].toString()),
+                      RaisedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return CallPage(
+                              channelName: msgJson['roomid'].toString(),
+                            );
+                          }));
+                        },
+                        child: Text('接受'),
+                      ),
+                      RaisedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text('取消'),
+                      ),
+                    ],
+                  );
+                });
+          } else {
+            // app聊天消息处理
+            setState(() {
+              _messages.add(msgJson);
+            });
+            _handleMessage(message);
+          }
         });
         setState(() {
           _profile = user;
@@ -167,15 +206,25 @@ class HomePageState extends State<HomePage> {
         _profile = null;
       });
     });
+    evtBus.off('message');
+    evtBus.on('message', (message) {
+      // _channel.sink.add('disconnect');
+      String msg = json.encode(message);
+      print(msg);
+      _channel.sink.add(msg);
+    });
     // evtBus.off('sigin_in');
     // evtBus.on('sigin_in', (args) {
     //   _initProfile();
     // });
   }
 
-  _initNotification() async {
+  _initApply() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int uid = prefs.getInt('uid');
+    if (uid == null) {
+      return;
+    }
     Response response = await dio
         .get('$baseUrl/room/findApply', queryParameters: {'invitees_uid': uid});
     if (response.data['code'] == 0 && response.data['applys'].length > 0) {

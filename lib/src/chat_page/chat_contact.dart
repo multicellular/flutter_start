@@ -6,6 +6,7 @@ import '../models/config.dart';
 import '../models/user.dart';
 import './chat_group.dart';
 import './call.dart';
+import '../component/event_bus.dart';
 
 Dio dio = new Dio();
 // dio.options.baseUrl = 'localhost:3000/api';
@@ -136,6 +137,8 @@ class SearchBarDelegate extends SearchDelegate<String> {
     });
     if (response.data['code'] == 0) {
       Navigator.pop(context);
+      evtBus.emit(
+          'message', {'type': 'apply', 'sendid': uid, 'toid': user['uid']});
     } else {
       print(response.data);
     }
@@ -336,7 +339,15 @@ class RoomDetailPageState extends State<RoomDetailPage> {
             ),
             RaisedButton(
               child: Text('视频聊天'),
-              onPressed: () {
+              onPressed: () async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                int uid = prefs.getInt('uid');
+                evtBus.emit('message', {
+                  'type': 'call',
+                  'sendid': uid,
+                  'roomid': widget.roomid,
+                  'toid': widget.room['chatid']
+                });
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
                   return CallPage(
                     channelName: widget.roomid.toString(),

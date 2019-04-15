@@ -1,20 +1,28 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as Path;
-
-import '../models/config.dart';
-import '../models/user.dart';
-
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
+import '../models/config.dart';
+import '../models/user.dart';
+import '../component/event_bus.dart';
+import '../chat_page/call.dart';
+
 String socketPath = DefaultConfig.socketPath;
 String urlPath = DefaultConfig.urlPath;
+Dio dio = new Dio();
+// dio.options.baseUrl = 'localhost:3000/api';
+String baseUrl = DefaultConfig.baseUrl;
 
 class Message {
   final int id;
@@ -77,6 +85,8 @@ class ChatGroupPageState extends State<ChatGroupPage>
   int uid;
   Database _db;
   bool _isLoadingMore = false;
+
+  File _imageFile;
 
   ScrollController _controller = new ScrollController();
   int _lastID;
@@ -208,19 +218,45 @@ class ChatGroupPageState extends State<ChatGroupPage>
     _controller.dispose();
   }
 
-  _sendMessage() {
+  Future<File> _compressAndGetFile(File file) async {
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      file.absolute.path,
+      minWidth: 100,
+      minHeight: 100,
+      quality: 100,
+      // rotate: 90,
+    );
+    // print(file.lengthSync());
+    // print(result.length);
+    return result;
+  }
+
+  _addMessage() {
     if (_messageController.text.isNotEmpty) {
-      Message message = Message(
-        type: 'text',
-        content: _messageController.text,
-        sendid: uid,
-        roomid: widget.roomid,
-        private: widget.private,
-        toid: widget.chatid,
-      );
-      _channel.sink.add(message.toString());
+      _sendMessage('text', _messageController.text);
       _messageController.text = '';
     }
+  }
+
+  _sendMessage(type, content) {
+    Message message = Message(
+      type: type,
+      content: content,
+      sendid: uid,
+      roomid: widget.roomid,
+      private: widget.private,
+      toid: widget.chatid,
+    );
+    _channel.sink.add(message.toString());
+  }
+
+  _addImage() async {
+    FormData formData = new FormData.from(
+        {'file': new UploadFileInfo(_imageFile, _imageFile.path)});
+    Response uplaodFile = await dio.post('$baseUrl/uploadFile', data: formData);
+    String imageUrl = uplaodFile.data['urls'];
+    _sendMessage('image', imageUrl);
   }
 
   @override
@@ -269,14 +305,75 @@ class ChatGroupPageState extends State<ChatGroupPage>
                 Row(
                   children: <Widget>[
                     IconButton(
-                      icon: Icon(Icons.file_upload),
-                      onPressed: () {},
+                      icon: Icon(Icons.call),
+                      onPressed: () {
+                        evtBus.emit('message', {
+                          'type': 'call',
+                          'sendid': uid,
+                          'roomid': widget.roomid,
+                          'toid': widget.chatid
+                        });
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return CallPage(
+                            channelName: widget.roomid.toString(),
+                          );
+                        }));
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.image),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return new Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                new ListTile(
+                                  leading: new Icon(Icons.photo_camera),
+                                  title: new Text("Camera"),
+                                  onTap: () async {
+                                    File image = await ImagePicker.pickImage(
+                                        source: ImageSource.camera);
+                                    _imageFile =
+                                        await _compressAndGetFile(image);
+                                    Navigator.pop(context);
+                                    _addImage();
+                                  },
+                                ),
+                                new ListTile(
+                                  leading: new Icon(Icons.photo_library),
+                                  title: new Text("Gallery"),
+                                  onTap: () async {
+                                    File image = await ImagePicker.pickImage(
+                                        source: ImageSource.gallery);
+                                    _imageFile =
+                                        await _compressAndGetFile(image);
+                                    Navigator.pop(context);
+                                    _addImage();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
                     ),
                     Expanded(
                       flex: 1,
                       child: Form(
                         child: TextFormField(
                           controller: _messageController,
+                          autofocus: true,
+                          // keyboardType: TextInputType.multiline,
+                          // maxLines: 4,
+                          // maxLength: 1000,
+                          // maxLengthEnforced: true,
+                          textInputAction: TextInputAction.send,
+                          onFieldSubmitted: (String value) {
+                            _addMessage();
+                          },
                           decoration:
                               new InputDecoration(hintText: 'Send a message'),
                         ),
@@ -285,7 +382,7 @@ class ChatGroupPageState extends State<ChatGroupPage>
                     IconButton(
                       icon: Icon(Icons.send),
                       onPressed: () {
-                        _sendMessage();
+                        _addMessage();
                       },
                     )
                   ],
@@ -355,7 +452,7 @@ class ChatMessage extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: message.type == 'image'
-                        ? Image.network(message.content)
+                        ? Image.network(urlPath + message.content)
                         : new Text(message.content),
                   ),
                 ],
