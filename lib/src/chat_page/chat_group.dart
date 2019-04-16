@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:hello_flutter/src/component/photo_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -452,7 +453,36 @@ class ChatMessage extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: message.type == 'image'
-                        ? Image.network(urlPath + message.content)
+                        ? GestureDetector(
+                            child: Image.network(urlPath + message.content),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  // transitionDuration:
+                                  //     Duration(milliseconds: 500),
+                                  pageBuilder: (BuildContext context,
+                                      Animation animation,
+                                      Animation secondaryAnimation) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: PhotoViewPage(
+                                          [urlPath + message.content]),
+                                    );
+                                  },
+                                ),
+                              );
+                              // Navigator.push(
+                              //     context,
+                              //     MaterialPageRoute(
+                              //       builder: (context) {
+                              //         return PhotoViewPage(
+                              //             [urlPath + message.content]);
+                              //       },
+                              //       fullscreenDialog: true,
+                              //     ));
+                            },
+                          )
                         : new Text(message.content),
                   ),
                 ],

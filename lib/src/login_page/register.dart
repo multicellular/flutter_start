@@ -2,6 +2,7 @@ import 'dart:io';
 // import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import '../component/toast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -67,6 +68,8 @@ class RegisterPageState extends State<RegisterPage> {
       } else {
         Navigator.pop(context);
       }
+    } else {
+      showToast(response.data['msg'],type: ToastType.error());
     }
   }
 

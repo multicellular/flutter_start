@@ -91,6 +91,9 @@ class ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   _initRoomMessages(room) async {
+    if (_db == null ) {
+      await _initDatabase();
+    }
     List results = await _db.query('local_messages',
         columns: ['msg'],
         where: '"groupid"=?',
@@ -108,14 +111,14 @@ class ChatRoomPageState extends State<ChatRoomPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    _initDatabase();
+    // _initDatabase();
     _initRooms();
   }
 
   @override
   void dispose() {
     super.dispose();
-    _db.close();
+    if (_db != null) _db.close();
   }
 
   @override
@@ -147,7 +150,7 @@ class ChatRoomPageState extends State<ChatRoomPage> {
                           ? DateTime.fromMillisecondsSinceEpoch(
                               int.parse(room.message['moment']),
                               // isUtc: true,
-                            ).toString().substring(0,16)
+                            ).toString().substring(0, 16)
                           : '',
                     ),
                     onTap: () async {

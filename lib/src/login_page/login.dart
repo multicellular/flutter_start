@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 // import '../blog_page/blog_book.dart';
 import '../models/config.dart';
 import '../component/event_bus.dart';
+import '../component/toast.dart';
 import '../home_page/home.dart';
 
 import './register.dart';
@@ -45,6 +46,8 @@ class LoginPageState extends State<LoginPage> {
       } else {
         Navigator.pop(context);
       }
+    } else {
+      showToast(response.data['msg'],type: ToastType.error());
     }
   }
 

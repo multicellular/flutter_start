@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:hello_flutter/src/component/toast.dart';
 import 'package:photo/photo.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,8 +25,16 @@ class PostBlogDialogState extends State<PostBlogDialog> {
   List<AssetEntity> _videos = [];
   // String _error = '';
   bool _isPrivate = false;
+  bool _isSending = false;
 
   _postBlog() async {
+    if (_isSending) {
+      showToast('seding...please wait a moment!', type: ToastType.tip());
+      return;
+    }
+    setState(() {
+      _isSending = true;
+    });
     List<AssetEntity> uploads = _videos.length > 0 ? _videos : _images;
     String mediaType = _videos.length > 0 ? 'video' : 'image';
     List _uploadFiles = [];
@@ -53,6 +62,9 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     if (response.data['code'] == 0) {
       Navigator.pop(context, response.data['blog']);
     }
+    setState(() {
+      _isSending = false;
+    });
   }
 
   void _testPhotoListParams() async {
@@ -195,7 +207,8 @@ class PostBlogDialogState extends State<PostBlogDialog> {
       appBar: AppBar(
         title: Text('Post Dialog'),
         actions: <Widget>[
-          Center(
+          Container(
+            margin: EdgeInsets.only(top: 18, right: 12),
             child: GestureDetector(
               onTap: () {
                 _postBlog();

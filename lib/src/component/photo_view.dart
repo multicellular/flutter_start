@@ -22,13 +22,18 @@ class PhotoViewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('preview image'),
-      ),
+      // appBar: AppBar(
+      //   title: Text('preview image'),
+      // ),
       body: Container(
-        child: PhotoViewGallery(
-          pageOptions: widgets,
-          backgroundDecoration: BoxDecoration(color: Colors.black87),
+        child: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: PhotoViewGallery(
+            pageOptions: widgets,
+            backgroundDecoration: BoxDecoration(color: Colors.black87),
+          ),
         ),
       ),
     );
