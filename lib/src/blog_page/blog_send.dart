@@ -1,14 +1,13 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:flutter/services.dart';
 import 'package:hello_flutter/src/component/toast.dart';
-import 'package:photo/photo.dart';
-import 'package:photo_manager/photo_manager.dart';
+import 'package:file_picker/file_picker.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
 import '../component/dioHttp.dart';
+import 'package:multi_image_picker/multi_image_picker.dart';
 
 var urlPath = DefaultConfig.urlPath;
 
@@ -19,9 +18,8 @@ class PostBlogDialog extends StatefulWidget {
 
 class PostBlogDialogState extends State<PostBlogDialog> {
   TextEditingController _contentController = new TextEditingController();
-  List<AssetEntity> _images = [];
-  List<AssetEntity> _videos = [];
-  // String _error = '';
+  List<Asset> _images = List<Asset>();
+  File _video;
   bool _isPrivate = false;
   bool _isSending = false;
 
@@ -33,22 +31,24 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     setState(() {
       _isSending = true;
     });
-    List<AssetEntity> uploads = _videos.length > 0 ? _videos : _images;
-    String mediaType = _videos.length > 0 ? 'video' : 'image';
-    List _uploadFiles = [];
-    for (var upload in uploads) {
-      File tempFile = await upload.file;
-      File file =
-          mediaType == 'image' ? await _compressAndGetFile(tempFile) : tempFile;
-      // String extension = path.extension(file.path);
-      // print(extension);
-      _uploadFiles.add(new UploadFileInfo(file, file.path));
-    }
-    FormData formData = new FormData.from({'file': _uploadFiles});
 
+    String mediaType = 'image';
+    FormData formData;
+    if (_video != null) {
+      mediaType = 'video';
+      formData =
+          new FormData.from({'file': new UploadFileInfo(_video, _video.path)});
+    } else {
+      List _uploadFiles = [];
+      for (var asset in _images) {
+        ByteData byteData = await asset.requestThumbnail(300, 300, quality: 60);
+        List<int> imageData = byteData.buffer.asUint8List();
+        _uploadFiles.add(new UploadFileInfo.fromBytes(imageData, 'blog.jpeg'));
+      }
+      formData = new FormData.from({'file': _uploadFiles});
+    }
     var uploadRes = await dioHttp.httpPost('/uploadFile', req: formData);
     String mediaUrls = uploadRes['urls'];
-
     var blogRes = await dioHttp.httpPost('/blog/postblog',
         req: {
           'content': _contentController.text,
@@ -65,138 +65,87 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     });
   }
 
-  void _testPhotoListParams() async {
-    var result = await PhotoManager.requestPermission();
-    if (result) {
-      // success
-      var assetPathList = await PhotoManager.getAssetPathList(isCache: true);
-      _pickAsset(PickType.all, pathList: assetPathList);
-    } else {
-      // fail
-      /// if result is fail, you can call `PhotoManger.openSetting();`  to open android/ios applicaton's setting to get permission
-    }
-  }
-
-  Future<File> _compressAndGetFile(File file) async {
-    var result = await FlutterImageCompress.compressAndGetFile(
-      file.absolute.path,
-      file.absolute.path,
-      minWidth: 300,
-      minHeight: 300,
-      quality: 100,
-      // rotate: 90,
-    );
-    // print(file.lengthSync());
-    // print(result.length);
-    return result;
-  }
-
   Widget _buildGridView() {
     return GridView.count(
       crossAxisCount: 3,
       mainAxisSpacing: 2,
       crossAxisSpacing: 2,
       children: List.generate(_images.length, (index) {
-        return AssetImageWidget(
-          assetEntity: _images[index],
-          width: 200,
-          height: 200,
-          boxFit: BoxFit.cover,
-          onPressed: () {
-            setState(() {
-              // _images
-              _images.removeAt(index);
-            });
-          },
+        Asset asset = _images[index];
+        return Stack(
+          alignment: Alignment.center,
+          fit: StackFit.expand,
+          overflow: Overflow.clip,
+          children: <Widget>[
+            AssetThumb(
+              asset: asset,
+              width: 300,
+              height: 300,
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: IconButton(
+                color: Colors.redAccent,
+                icon: Icon(Icons.delete_forever),
+                onPressed: () {
+                  setState(() {
+                    _images.removeAt(index);
+                  });
+                },
+              ),
+            ),
+          ],
         );
       }),
     );
   }
 
   Widget _buildButtonView() {
-    bool isHideImageBtn = _images.length > 8 || _videos.length > 0;
-    bool isHideVideoBtn = _images.length > 0 || _videos.length > 0;
+    bool isHideImageBtn = _images.length > 8 || _video != null;
+    bool isHideVideoBtn = _images.length > 0 || _video != null;
     return Row(
       children: <Widget>[
         isHideImageBtn
             ? Container()
             : IconButton(
-                icon: Icon(Icons.photo),
-                onPressed: () => _pickAsset(PickType.onlyImage)),
+                icon: Icon(Icons.photo), onPressed: () => loadAssets()),
         isHideVideoBtn
             ? Container()
             : IconButton(
                 icon: Icon(Icons.videocam),
-                onPressed: () => _pickAsset(PickType.onlyVideo)),
-        // IconButton(
-        //     icon: Icon(Icons.videocam),
-        //     onPressed: () => _testPhotoListParams()),
+                onPressed: () async {
+                  _video = await FilePicker.getFile(type: FileType.VIDEO);
+                }),
       ],
     );
   }
 
-  void _pickAsset(PickType type, {List<AssetPathEntity> pathList}) async {
-    List<AssetEntity> imgList = await PhotoPicker.pickAsset(
-      // BuildContext required
-      context: context,
+  Future<void> loadAssets() async {
+    // setState(() {
+    //   _images = List<Asset>();
+    // });
 
-      /// The following are optional parameters.
-      themeColor: Colors.blue,
-      // the title color and bottom color
-      padding: 1.0,
-      // item padding
-      dividerColor: Colors.grey,
-      // divider color
-      disableColor: Colors.grey.shade300,
-      // the check box disable color
-      itemRadio: 0.88,
-      // the content item radio
-      maxSelected: type == PickType.onlyVideo ? 1 : 9,
-      // max picker image count
-      // provider: I18nProvider.english,
-      provider: I18nProvider.chinese,
-      // i18n provider ,default is chinese. , you can custom I18nProvider or use ENProvider()
-      // rowCount: 3,
-      // item row count
-      textColor: Colors.white,
-      // text color
-      // thumbSize: 64,
-      // preview thumb size , default is 64
-      sortDelegate: SortDelegate.common,
-      // default is common ,or you make custom delegate to sort your gallery
-      checkBoxBuilderDelegate: DefaultCheckBoxBuilderDelegate(
-        activeColor: Colors.white,
-        unselectedColor: Colors.white,
-      ),
-      // default is DefaultCheckBoxBuilderDelegate ,or you make custom delegate to create checkbox
-      badgeDelegate: const DurationBadgeDelegate(),
-      // badgeDelegate to show badge widget
-      pickType: type,
-      photoPathList: pathList,
-    );
+    List<Asset> resultList;
+    String error;
 
-    if (imgList == null) {
-      // _error = "not select item";
-    } else {
-      // List<String> r = [];
-      // for (var e in imgList) {
-      //   var file = await e.file;
-      //   // r.add(file.absolute.path);
-      //   if (type == PickType.onlyVideo) {
-      //     _uploadFiles.add(new UploadFileInfo(file, '.mp4'));
-      //   } else {
-      //     _uploadFiles.add(new UploadFileInfo(file, '.png'));
-      //   }
-      // }
-      // _error = r.join("\n\n");
-      setState(() {
-        if (type == PickType.onlyVideo) {
-          _videos.addAll(imgList);
-        } else {
-          _images.addAll(imgList);
-        }
-      });
+    try {
+      resultList = await MultiImagePicker.pickImages(
+        maxImages: 9,
+        enableCamera: true
+      );
+    } catch (e) {
+      error = e.message;
     }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) return;
+
+    setState(() {
+      _images.addAll(resultList);
+    });
   }
 
   @override
@@ -249,94 +198,12 @@ class PostBlogDialogState extends State<PostBlogDialog> {
           ),
           _buildButtonView(),
           Expanded(
-            child: _images.length > 0 ? _buildGridView() : Container(),
+            child: _buildGridView(),
           ),
           // Center(child: Text('Error: $_error')),
         ],
       ),
     );
-  }
-}
-
-class AssetImageWidget extends StatelessWidget {
-  final AssetEntity assetEntity;
-  final double width;
-  final double height;
-  final BoxFit boxFit;
-  final VoidCallback onPressed;
-
-  const AssetImageWidget({
-    Key key,
-    @required this.assetEntity,
-    this.width,
-    this.height,
-    this.boxFit,
-    this.onPressed,
-  }) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    if (assetEntity == null) {
-      return _buildContainer();
-    }
-    return FutureBuilder<Size>(
-      builder: (c, s) {
-        if (!s.hasData) {
-          return Container();
-        }
-        var size = s.data;
-        return FutureBuilder<Uint8List>(
-          builder: (BuildContext context, snapshot) {
-            if (snapshot.hasData) {
-              return _buildContainer(
-                child: Image.memory(
-                  snapshot.data,
-                  width: width,
-                  height: height,
-                  fit: boxFit,
-                ),
-              );
-            } else {
-              return _buildContainer();
-            }
-          },
-          future: assetEntity.thumbDataWithSize(
-            size.width.toInt(),
-            size.height.toInt(),
-          ),
-        );
-      },
-      future: assetEntity.size,
-    );
-  }
-
-  Widget _buildContainer({Widget child}) {
-    child ??= Container();
-    return Stack(
-      alignment: Alignment.center,
-      fit: StackFit.expand,
-      overflow: Overflow.clip,
-      children: <Widget>[
-        Container(
-          width: width,
-          height: height,
-          child: child,
-        ),
-        Positioned(
-          right: 0,
-          top: 0,
-          child: IconButton(
-            color: Colors.redAccent,
-            icon: Icon(Icons.delete_forever),
-            onPressed: onPressed,
-          ),
-        ),
-      ],
-    );
-    // return Container(
-    //   width: width,
-    //   height: height,
-    //   child: child,
-    // );
   }
 }
 

@@ -22,7 +22,7 @@ class ChatContactPageState extends State<ChatContactPage> {
   List _searchUsers = [];
 
   _initUsers() async {
-    var userRes = dioHttp.httpGet('/room/getUserFriends', needToken: true);
+    var userRes = await dioHttp.httpGet('/room/getUserFriends', needToken: true);
     if (userRes != null) {
       List<User> temps = <User>[];
       List friends = userRes['friends'];

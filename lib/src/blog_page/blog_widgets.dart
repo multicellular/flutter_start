@@ -47,22 +47,20 @@ class BuildBlog extends StatelessWidget {
 
   Widget _initMediaWidget(
       String mediaType, String mediaUrls, BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        mediaType == 'image'
-            ? _previewImage(mediaUrls, context)
-            : _previewVideo(mediaUrls, context);
-      },
-      child: Container(
-        margin: EdgeInsets.all(10),
-        child: mediaType == 'image'
-            ? _initImages(mediaUrls)
-            : Image.asset('assets/images/video_default.jpg'),
-      ),
+    return Container(
+      margin: EdgeInsets.all(10),
+      child: mediaType == 'image'
+          ? _initImages(mediaUrls, context)
+          : GestureDetector(
+              child: Image.asset('assets/images/video_default.jpg'),
+              onTap: () {
+                _previewVideo(mediaUrls, context);
+              },
+            ),
     );
   }
 
-  _previewImage(String imageUrls, BuildContext context) {
+  _previewImage(String imageUrls, BuildContext context, int page) {
     List images = [];
     List viewImages = [];
     if (imageUrls.isNotEmpty) {
@@ -72,13 +70,22 @@ class BuildBlog extends StatelessWidget {
       viewImages.add(urlPath + image);
     }
     Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) {
-            return PhotoViewPage(viewImages);
-          },
-          fullscreenDialog: true,
-        ));
+      context,
+      PageRouteBuilder(
+        // transitionDuration:
+        //     Duration(milliseconds: 500),
+        pageBuilder: (BuildContext context, Animation animation,
+            Animation secondaryAnimation) {
+          return FadeTransition(
+            opacity: animation,
+            child: PhotoViewPage(
+              viewImages,
+              page: page,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   _previewVideo(String url, BuildContext context) {
@@ -93,7 +100,7 @@ class BuildBlog extends StatelessWidget {
         ));
   }
 
-  Widget _initImages(String imagesStr) {
+  Widget _initImages(String imagesStr, BuildContext context) {
     List images = [];
     if (imagesStr.isNotEmpty) {
       images = imagesStr.split(',');
@@ -103,25 +110,33 @@ class BuildBlog extends StatelessWidget {
       return Container();
     }
     List<Widget> widgets = <Widget>[];
-    for (var image in images) {
+    for (int i = 0; i < images.length; i++) {
+      String image = images[i];
       // Widget widget = new Image(
       //     image: new CachedNetworkImageProvider(urlPath + image),
       //     // image: NetworkImage(urlPath + image),
       //     width: 100,
       //     height: 100,
       //     fit: BoxFit.cover);
-      Widget widget = new CachedNetworkImage(
-        // width: 100,
-        // height: 100,
-        // fit: BoxFit.cover,
-        placeholder: (context, string) {
-          return Image.asset('assets/images/no_image.jpeg');
-        },
-        errorWidget: (context, string, obj) {
-          return Image.asset('assets/images/no_image.jpeg');
-        },
-        imageUrl: urlPath + image,
-      );
+      Widget widget = Hero(
+          tag: urlPath + image,
+          child: GestureDetector(
+            onTap: () {
+              _previewImage(imagesStr, context, i);
+            },
+            child: CachedNetworkImage(
+              width: 300,
+              height: 300,
+              fit: BoxFit.cover,
+              placeholder: (context, string) {
+                return Image.asset('assets/images/no_image.jpeg');
+              },
+              errorWidget: (context, string, obj) {
+                return Image.asset('assets/images/no_image.jpeg');
+              },
+              imageUrl: urlPath + image,
+            ),
+          ));
       widgets.add(widget);
     }
     return GridView.count(
@@ -208,7 +223,7 @@ class BuildBlog extends StatelessWidget {
                 ),
               )
             : Container(),
-        // 评论内容 转发时的评�� type区分是否为转发
+        // 评论内容 转���时的评�� type区分是否为转发
         type == BuildBlog.forward_blog
             ? Container(
                 child: forwardComment.isNotEmpty

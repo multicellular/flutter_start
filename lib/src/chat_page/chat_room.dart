@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as Path;
@@ -60,13 +59,13 @@ class ChatRoomPageState extends State<ChatRoomPage> {
   List _localMessage = [];
 
   _initRooms() async {
-    List<Response> response = await Future.wait([
+    List res = await Future.wait([
       dioHttp.httpGet('/room/getUserRooms', needToken: true),
       dioHttp.httpGet('/room/getUserChats', needToken: true),
     ]);
     List<Room> _temps = <Room>[];
-    List tempRooms = response[0].data['rooms'];
-    List tempChats = response[1].data['chats'];
+    List tempRooms = res[0]['rooms'];
+    List tempChats = res[1]['chats'];
     tempChats.addAll(tempRooms);
     for (var room in tempChats) {
       var message = await _initRoomMessages(room);

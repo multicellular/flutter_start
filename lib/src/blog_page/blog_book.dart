@@ -59,6 +59,7 @@ class BlogPageState extends State<BlogPage> {
           title: Text('Blog'),
           actions: <Widget>[
             PopupMenuButton<String>(
+              offset: Offset(30, 40),
               // overflow menu
               onSelected: (value) {
                 if (value == 'is_private') {
@@ -321,6 +322,26 @@ class MyBlogPageState extends State<MyBlogPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         // mainAxisSize: MainAxisSize.max,
                         children: <Widget>[
+                          PopupMenuButton<String>(
+                            offset: Offset(30, 40),
+                            // overflow menu
+                            onSelected: (value) async {
+                              var res = await dioHttp.httpGet(
+                                  '/blog/deleteBlog',
+                                  req: {'blogid': blog['id']});
+                              if (res != null) {
+                                Navigator.pop(context);
+                              }
+                            },
+                            itemBuilder: (BuildContext context) {
+                              return [
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Text('delete blog'),
+                                )
+                              ];
+                            },
+                          ),
                           BuildBlog(
                               blog: blog,
                               type: BuildBlog.my_blog,

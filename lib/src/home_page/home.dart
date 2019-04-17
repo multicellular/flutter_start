@@ -1,8 +1,5 @@
-// import 'dart:async';
-// import 'dart:io';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as Path;
 import 'package:shared_preferences/shared_preferences.dart';
