@@ -7,7 +7,7 @@ import '../component/video_player.dart';
 import '../models/config.dart';
 
 var urlPath = DefaultConfig.urlPath;
-var baseUrl = DefaultConfig.baseUrl;
+// var baseUrl = DefaultConfig.baseUrl;
 
 class BuildBlog extends StatelessWidget {
   final dynamic blog;
@@ -151,54 +151,61 @@ class BuildBlog extends StatelessWidget {
       children: <Widget>[
         // 博客标题 头像、名称、时间，showHeader控制是否展示
         showHeader
-            ? Row(
-                children: <Widget>[
-                  ClipOval(
-                    child: SizedBox(
-                      width: 40.0,
-                      height: 40.0,
-                      // child: Image.network(urlPath + _profile['avator'],
-                      //     fit: BoxFit.cover),
-                      child: CachedNetworkImage(
-                        fit: BoxFit.cover,
-                        placeholder: (context, string) {
-                          return Image.asset('assets/images/no_avatar.jpeg');
-                        },
-                        errorWidget: (context, string, obj) {
-                          return Image.asset('assets/images/no_avatar.jpeg');
-                        },
-                        imageUrl: urlPath +
-                            (blog['uavator'] == null
-                                ? 'null'
-                                : blog['uavator']),
+            ? GestureDetector(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return ProfilePage(blog['uid']);
+                  }));
+                },
+                child: Row(
+                  children: <Widget>[
+                    ClipOval(
+                      child: SizedBox(
+                        width: 40.0,
+                        height: 40.0,
+                        // child: Image.network(urlPath + _profile['avator'],
+                        //     fit: BoxFit.cover),
+                        child: CachedNetworkImage(
+                          fit: BoxFit.cover,
+                          placeholder: (context, string) {
+                            return Image.asset('assets/images/no_avatar.jpeg');
+                          },
+                          errorWidget: (context, string, obj) {
+                            return Image.asset('assets/images/no_avatar.jpeg');
+                          },
+                          imageUrl: urlPath +
+                              (blog['uavator'] == null
+                                  ? 'null'
+                                  : blog['uavator']),
+                        ),
                       ),
                     ),
-                  ),
-                  // CircleAvatar(
-                  //   // backgroundImage: NetworkImage(urlPath + blog['uavator']),
-                  //   backgroundImage: blog['uavator'] != null
-                  //       ? new CachedNetworkImageProvider(
-                  //           urlPath + blog['uavator'])
-                  //       : AssetImage('assets/images/no_avatar.jpeg'),
-                  //   // child: Text(blog['uname']),
-                  // ),
-                  Container(
-                    margin: EdgeInsets.only(left: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          blog['uname'] != null ? blog['uname'] : '',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          blog['moment'],
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
+                    // CircleAvatar(
+                    //   // backgroundImage: NetworkImage(urlPath + blog['uavator']),
+                    //   backgroundImage: blog['uavator'] != null
+                    //       ? new CachedNetworkImageProvider(
+                    //           urlPath + blog['uavator'])
+                    //       : AssetImage('assets/images/no_avatar.jpeg'),
+                    //   // child: Text(blog['uname']),
+                    // ),
+                    Container(
+                      margin: EdgeInsets.only(left: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            blog['uname'] != null ? blog['uname'] : '',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            blog['moment'],
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               )
             : Container(),
         // 评论内容 转发时的评�� type区分是否为转发

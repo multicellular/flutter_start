@@ -1,5 +1,5 @@
 // import 'dart:async';
-import 'dart:io';
+// import 'dart:io';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
@@ -13,6 +13,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../component/event_bus.dart';
 import '../models/config.dart';
+import '../component/dioHttp.dart';
 
 import '../login_page/login.dart';
 import '../login_page/profile.dart';
@@ -20,11 +21,6 @@ import '../blog_page/blog_book.dart';
 import '../chat_page/chat_book.dart';
 import '../chat_page/call.dart';
 
-// Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
-// Dio dio = new Dio(options);
-Dio dio = new Dio();
-// dio.options.baseUrl = 'localhost:3000/api';
-String baseUrl = DefaultConfig.baseUrl;
 String urlPath = DefaultConfig.urlPath;
 String socketPath = DefaultConfig.socketPath;
 
@@ -118,66 +114,60 @@ class HomePageState extends State<HomePage> {
   }
 
   _initProfile() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String token = prefs.getString('token');
-    if (token != null && token.isNotEmpty) {
-      Options options =
-          Options(headers: {HttpHeaders.authorizationHeader: token});
-      Response response = await dio.get('$baseUrl/user/info', options: options);
-      if (response.data['code'] == 0) {
-        var user = response.data['user'];
-        int connectid = user['id'];
-        _channel =
-            IOWebSocketChannel.connect(socketPath + '/connect/$connectid');
-        _channel.sink.add('connect');
-        _channel.stream.listen((message) {
-          var msgJson = json.decode(message);
-          if (msgJson['type'] == 'apply') {
-            // 好友申请监听
-            _initApply();
-          } else if (msgJson['type'] == 'call') {
-            // 视频通话监听
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return SimpleDialog(
-                    title: Text('视频聊天'),
-                    children: <Widget>[
-                      Text(msgJson['sendid'].toString()),
-                      RaisedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                            return CallPage(
-                              channelName: msgJson['roomid'].toString(),
-                            );
-                          }));
-                        },
-                        child: Text('接受'),
-                      ),
-                      RaisedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text('取消'),
-                      ),
-                    ],
-                  );
-                });
-          } else {
-            // app聊天消息处理
-            setState(() {
-              _messages.add(msgJson);
-            });
-            _handleMessage(message);
-          }
-        });
-        setState(() {
-          _profile = user;
-        });
-      }
+    var userRes = await dioHttp.httpGet('/user/info', needToken: true);
+    if (userRes != null) {
+      var user = userRes['user'];
+      int connectid = user['id'];
+      _channel = IOWebSocketChannel.connect(socketPath + '/connect/$connectid');
+      _channel.sink.add('connect');
+      _channel.stream.listen((message) {
+        var msgJson = json.decode(message);
+        if (msgJson['type'] == 'apply') {
+          // 好友申请监听
+          _initApply();
+        } else if (msgJson['type'] == 'call') {
+          // 视频通话监听
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return SimpleDialog(
+                  title: Text('视频聊天'),
+                  children: <Widget>[
+                    Text(msgJson['sendid'].toString()),
+                    RaisedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return CallPage(
+                            channelName: msgJson['roomid'].toString(),
+                          );
+                        }));
+                      },
+                      child: Text('接受'),
+                    ),
+                    RaisedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text('取消'),
+                    ),
+                  ],
+                );
+              });
+        } else {
+          // app聊天消息处理
+          setState(() {
+            _messages.add(msgJson);
+          });
+          _handleMessage(message);
+        }
+      });
+      setState(() {
+        _profile = user;
+      });
     }
+    // }
   }
 
   _handleMessage(message) async {
@@ -225,10 +215,11 @@ class HomePageState extends State<HomePage> {
     if (uid == null) {
       return;
     }
-    Response response = await dio
-        .get('$baseUrl/room/findApply', queryParameters: {'invitees_uid': uid});
-    if (response.data['code'] == 0 && response.data['applys'].length > 0) {
-      var _applys = response.data['applys'];
+    var applyRes =
+        await dioHttp.httpGet('/room/findApply', req: {'invitees_uid': uid});
+
+    if (applyRes != null && applyRes['applys'].length > 0) {
+      var _applys = applyRes['applys'];
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -250,11 +241,10 @@ class HomePageState extends State<HomePage> {
                           IconButton(
                             icon: Icon(Icons.close),
                             onPressed: () async {
-                              Response result = await dio.post(
-                                '$baseUrl/room/ignoreApply',
-                                data: {'applyid': apply['id']},
-                              );
-                              if (result.data['code'] == 0) {
+                              var result = await dioHttp.httpPost(
+                                  '/room/ignoreApply',
+                                  req: {'applyid': apply['id']});
+                              if (result != null) {
                                 _applys.removeAt(index);
                                 if (_applys.length == 0) {
                                   Navigator.pop(context);
@@ -265,9 +255,9 @@ class HomePageState extends State<HomePage> {
                           IconButton(
                             icon: Icon(Icons.check),
                             onPressed: () async {
-                              Response result = await dio.post(
-                                '$baseUrl/room/allowJoinFriend',
-                                data: {
+                              var result = await dioHttp.httpPost(
+                                '/room/allowJoinFriend',
+                                req: {
                                   'apply_uid': apply['apply_uid'],
                                   'apply_flist_id': apply['apply_flist_id'],
                                   'invitees_uid': apply['invitees_uid'],
@@ -276,7 +266,7 @@ class HomePageState extends State<HomePage> {
                                   'applyId': apply['id']
                                 },
                               );
-                              if (result.data['code'] == 0) {
+                              if (result != null) {
                                 _applys.removeAt(index);
                                 if (_applys.length == 0) {
                                   Navigator.pop(context);

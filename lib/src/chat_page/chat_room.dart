@@ -1,19 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-// import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as Path;
 
 import '../models/config.dart';
 import './chat_group.dart';
+import '../component/dioHttp.dart';
 
-Dio dio = new Dio();
-// dio.options.baseUrl = 'localhost:3000/api';
 var urlPath = DefaultConfig.urlPath;
-var baseUrl = DefaultConfig.baseUrl;
 var socketPath = DefaultConfig.socketPath;
 
 class Room {
@@ -64,11 +60,9 @@ class ChatRoomPageState extends State<ChatRoomPage> {
   List _localMessage = [];
 
   _initRooms() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    uid = prefs.getInt('uid');
     List<Response> response = await Future.wait([
-      dio.get('$baseUrl/room/getUserRooms', queryParameters: {'uid': uid}),
-      dio.get('$baseUrl/room/getUserChats', queryParameters: {'uid': uid})
+      dioHttp.httpGet('/room/getUserRooms', needToken: true),
+      dioHttp.httpGet('/room/getUserChats', needToken: true),
     ]);
     List<Room> _temps = <Room>[];
     List tempRooms = response[0].data['rooms'];
@@ -91,7 +85,7 @@ class ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   _initRoomMessages(room) async {
-    if (_db == null ) {
+    if (_db == null) {
       await _initDatabase();
     }
     List results = await _db.query('local_messages',

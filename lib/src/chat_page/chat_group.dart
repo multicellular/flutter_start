@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:hello_flutter/src/component/photo_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -18,12 +17,11 @@ import '../models/config.dart';
 import '../models/user.dart';
 import '../component/event_bus.dart';
 import '../chat_page/call.dart';
+import '../component/dioHttp.dart';
+import '../component/photo_view.dart';
 
 String socketPath = DefaultConfig.socketPath;
 String urlPath = DefaultConfig.urlPath;
-Dio dio = new Dio();
-// dio.options.baseUrl = 'localhost:3000/api';
-String baseUrl = DefaultConfig.baseUrl;
 
 class Message {
   final int id;
@@ -255,8 +253,8 @@ class ChatGroupPageState extends State<ChatGroupPage>
   _addImage() async {
     FormData formData = new FormData.from(
         {'file': new UploadFileInfo(_imageFile, _imageFile.path)});
-    Response uplaodFile = await dio.post('$baseUrl/uploadFile', data: formData);
-    String imageUrl = uplaodFile.data['urls'];
+    var fileRes = await dioHttp.httpPost('/uploadFile', req: formData);
+    String imageUrl = fileRes['urls'];
     _sendMessage('image', imageUrl);
   }
 

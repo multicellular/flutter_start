@@ -1,13 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
+import '../component/dioHttp.dart';
 
-Dio dio = new Dio();
 var urlPath = DefaultConfig.urlPath;
-var baseUrl = DefaultConfig.baseUrl;
 
 class BlogDetailPage extends StatefulWidget {
   final dynamic blog;
@@ -21,11 +18,13 @@ class BlogDetailPageState extends State<BlogDetailPage> {
   List _comments = [];
 
   _getComments() async {
-    Response response = await dio.get('$baseUrl/blog/getcomments',
-        queryParameters: {'blogid': widget.blog['id']});
-    setState(() {
-      _comments = response.data['comments'];
-    });
+    var commentRes = await dioHttp
+        .httpGet('/blog/getcomments', req: {'blogid': widget.blog['id']});
+    if (commentRes != null) {
+      setState(() {
+        _comments = commentRes['comments'];
+      });
+    }
   }
 
   _sendComment(String content) async {
@@ -33,18 +32,14 @@ class BlogDetailPageState extends State<BlogDetailPage> {
       // content = _commentController.text;
       return;
     }
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int uid = await prefs.get('uid');
-    Response response = await dio.post(
-      '$baseUrl/blog/postcomment',
-      data: {
-        'blogid': widget.blog['id'],
-        'content': content,
-        'uid': uid,
-      },
-    );
-    if (response.data['code'] == 0) {
-      var comment = response.data['comment'];
+    var commentRes = await dioHttp.httpPost('/blog/postcomment',
+        req: {
+          'blogid': widget.blog['id'],
+          'content': content,
+        },
+        needToken: true);
+    if (commentRes != null) {
+      var comment = commentRes['comment'];
       setState(() {
         _comments.add(comment);
         widget.blog['comments'] = _comments.length.toString();

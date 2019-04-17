@@ -6,13 +6,11 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:hello_flutter/src/component/toast.dart';
 import 'package:photo/photo.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
+import '../component/dioHttp.dart';
 
-Dio dio = new Dio();
 var urlPath = DefaultConfig.urlPath;
-var baseUrl = DefaultConfig.baseUrl;
 
 class PostBlogDialog extends StatefulWidget {
   @override
@@ -47,20 +45,20 @@ class PostBlogDialogState extends State<PostBlogDialog> {
       _uploadFiles.add(new UploadFileInfo(file, file.path));
     }
     FormData formData = new FormData.from({'file': _uploadFiles});
-    Response uplaodFile = await dio.post('$baseUrl/uploadFile', data: formData);
-    String mediaUrls = uplaodFile.data['urls'];
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int uid = await prefs.get('uid');
-    Response response = await dio.post('$baseUrl/blog/postblog', data: {
-      // 'title': '',
-      'content': _contentController.text,
-      'media_type': mediaType,
-      'media_urls': mediaUrls,
-      'uid': uid,
-      'is_private': _isPrivate
-    });
-    if (response.data['code'] == 0) {
-      Navigator.pop(context, response.data['blog']);
+
+    var uploadRes = await dioHttp.httpPost('/uploadFile', req: formData);
+    String mediaUrls = uploadRes['urls'];
+
+    var blogRes = await dioHttp.httpPost('/blog/postblog',
+        req: {
+          'content': _contentController.text,
+          'media_type': mediaType,
+          'media_urls': mediaUrls,
+          'is_private': _isPrivate
+        },
+        needToken: true);
+    if (blogRes != null) {
+      Navigator.pop(context, blogRes['blog']);
     }
     setState(() {
       _isSending = false;
@@ -130,9 +128,9 @@ class PostBlogDialogState extends State<PostBlogDialog> {
             : IconButton(
                 icon: Icon(Icons.videocam),
                 onPressed: () => _pickAsset(PickType.onlyVideo)),
-        IconButton(
-            icon: Icon(Icons.videocam),
-            onPressed: () => _testPhotoListParams()),
+        // IconButton(
+        //     icon: Icon(Icons.videocam),
+        //     onPressed: () => _testPhotoListParams()),
       ],
     );
   }
@@ -358,13 +356,11 @@ class ForwardBlogDialog extends StatelessWidget {
     } else {
       sourceId = blog['id'];
     }
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int uid = await prefs.get('uid');
-    // data: { title, content, media_urls, media_type, uid, forward_comment, source_id, is_private }
-    Response result = await dio.post('$baseUrl/blog/postblog',
-        data: {'forward_comment': comment, 'uid': uid, 'source_id': sourceId});
-    if (result.data['code'] == 0) {
-      Navigator.pop(context, result.data['blog']);
+    var blogRes = dioHttp.httpPost('/blog/postblog',
+        req: {'forward_comment': comment, 'source_id': sourceId},
+        needToken: true);
+    if (blogRes != null) {
+      Navigator.pop(context, blogRes['blog']);
     }
   }
 

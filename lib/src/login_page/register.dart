@@ -1,25 +1,14 @@
 import 'dart:io';
-// import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import '../component/toast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../component/event_bus.dart';
 import '../home_page/home.dart';
+import '../component/dioHttp.dart';
 
-// import '../blog_page/blog_book.dart';
 import './login.dart';
-// import 'dart:async';
-
-import '../models/config.dart';
-
-// Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
-// Dio dio = new Dio(options);
-Dio dio = new Dio();
-// dio.options.baseUrl = 'localhost:3000/api';
-String baseUrl = DefaultConfig.baseUrl;
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -29,33 +18,21 @@ class RegisterPage extends StatefulWidget {
 class RegisterPageState extends State<RegisterPage> {
   TextEditingController _unameController = new TextEditingController();
   TextEditingController _pwdController = new TextEditingController();
-  // GlobalKey _fromKey = new GlobalKey();
-  // Future<File> _imageFile;
   File _imageFile;
-  // File avator;
-  // void _selectedImage() {
-  //   setState(() {
-  //     _imageFile = ImagePicker.pickImage(source: ImageSource.gallery);
-  //   });
-  // }
 
   _signUp() async {
     FormData formData = new FormData.from(
         {'file': new UploadFileInfo(_imageFile, _imageFile.path)});
-    Response uplaodFile = await dio.post('$baseUrl/uploadFile', data: formData);
-    String avatorUrl = uplaodFile.data['urls'];
-    Response response = await dio.post('$baseUrl/user/signup', data: {
+    var res = await dioHttp.httpPost('/uploadFile', req: formData);
+    String avatorUrl = res['urls'];
+    var userRes = await dioHttp.httpPost('/user/signup', req: {
       'name': _unameController.text,
       'password': _pwdController.text,
       'avator': avatorUrl
     });
-    // Map<String, dynamic> res = response.data;
-    if (response.data['code'] == 0) {
-      // Navigator.push(context, MaterialPageRoute(builder: (context) {
-      //   return BlogPage();
-      // }));
-      var user = response.data['user'];
-      String token = response.data['token'];
+    if (userRes != null) {
+      var user = userRes['user'];
+      String token = userRes['token'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setInt('uid', user['id']);
       await prefs.setString('token', 'Bearer $token');
@@ -68,8 +45,6 @@ class RegisterPageState extends State<RegisterPage> {
       } else {
         Navigator.pop(context);
       }
-    } else {
-      showToast(response.data['msg'],type: ToastType.error());
     }
   }
 

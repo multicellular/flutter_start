@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
+import '../component/dioHttp.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dio/dio.dart';
-// import 'dart:convert';
-// import '../blog_page/blog_book.dart';
-import '../models/config.dart';
 import '../component/event_bus.dart';
-import '../component/toast.dart';
 import '../home_page/home.dart';
 
 import './register.dart';
-
-// Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
-// Dio dio = new Dio(options);
-Dio dio = new Dio();
-// dio.options.baseUrl = 'localhost:3000/api';
-String baseUrl = DefaultConfig.baseUrl;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -27,28 +17,28 @@ class LoginPageState extends State<LoginPage> {
   // GlobalKey _fromKey = new GlobalKey();
 
   _signIn() async {
-    // Response response;
-    Response response = await dio.post('$baseUrl/user/signin',
-        data: {'name': _unameController.text, 'password': _pwdController.text});
-    // Map<String, dynamic> res = response.data;
-    if (response.data['code'] == 0) {
-      var user = response.data['user'];
-      String token = response.data['token'];
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('uid', user['id']);
-      await prefs.setString('token', 'Bearer $token');
-      evtBus.emit('sigin_in');
-      if (context.toString().indexOf('LoginPage') > -1 ||
-          context.toString().indexOf('RegisterPage') > -1) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) {
-          return HomePage();
-        }));
-      } else {
-        Navigator.pop(context);
+    dioHttp.httpPost('/user/signin', req: {
+      'name': _unameController.text,
+      'password': _pwdController.text
+    }).then((res) async {
+      if (res != null) {
+        var user = res['user'];
+        String token = res['token'];
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('uid', user['id']);
+        await prefs.setString('token', 'Bearer $token');
+        evtBus.emit('sigin_in');
+        if (context.toString().indexOf('LoginPage') > -1 ||
+            context.toString().indexOf('RegisterPage') > -1) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) {
+            return HomePage();
+          }));
+        } else {
+          Navigator.pop(context);
+        }
       }
-    } else {
-      showToast(response.data['msg'],type: ToastType.error());
-    }
+    });
+    // Map<String, dynamic> res = response.data;
   }
 
   @override
@@ -142,7 +132,6 @@ class LoginPageState extends State<LoginPage> {
         ));
   }
 }
-
 
 class InputWidget extends StatelessWidget {
   final double topRight;

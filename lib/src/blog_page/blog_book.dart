@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import './blog_detail.dart';
 import './blog_send.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
 import '../home_page/home.dart';
-// import '../chat_page/chat_room.dart';
+import '../component/dioHttp.dart';
 
-// BaseOptions options = new BaseOptions(baseUrl: 'localhost:3000/api');
-// Dio dio = new Dio(options);
-Dio dio = new Dio();
-// dio.options.baseUrl = 'localhost:3000/api';
 var urlPath = DefaultConfig.urlPath;
-var baseUrl = DefaultConfig.baseUrl;
 
 class BlogPage extends StatefulWidget {
   @override
@@ -23,7 +16,6 @@ class BlogPage extends StatefulWidget {
 
 class BlogPageState extends State<BlogPage> {
   List blogs = [];
-  Response response;
   ScrollController _controller = new ScrollController();
   bool isRefreshing = false;
   // CircularProgressIndicator progressIndicator = CircularProgressIndicator();
@@ -32,11 +24,13 @@ class BlogPageState extends State<BlogPage> {
     setState(() {
       isRefreshing = true;
     });
-    response = await dio.get('$baseUrl/blog/getblogs');
-    setState(() {
-      blogs = response.data['blogs'];
-      isRefreshing = false;
-    });
+    var blogRes = await dioHttp.httpGet('/blog/getblogs');
+    if (blogRes != null) {
+      setState(() {
+        blogs = blogRes['blogs'];
+        isRefreshing = false;
+      });
+    }
   }
 
   @override
@@ -261,7 +255,6 @@ class MyBlogPage extends StatefulWidget {
 
 class MyBlogPageState extends State<MyBlogPage> {
   List blogs = [];
-  Response response;
   ScrollController _controller = new ScrollController();
   bool isRefreshing = false;
 
@@ -269,15 +262,14 @@ class MyBlogPageState extends State<MyBlogPage> {
     setState(() {
       isRefreshing = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int uid = await prefs.get('uid');
-    response = await dio
-        .get('$baseUrl/blog/getBlogsByUser', queryParameters: {'uid': uid});
-
-    setState(() {
-      blogs = response.data['blogs'];
-      isRefreshing = false;
-    });
+    var blogRes =
+        await dioHttp.httpGet('/blog/getBlogsByUser', needToken: true);
+    if (blogRes != null) {
+      setState(() {
+        blogs = blogRes['blogs'];
+        isRefreshing = false;
+      });
+    }
   }
 
   @override

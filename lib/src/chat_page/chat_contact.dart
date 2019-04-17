@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/config.dart';
@@ -7,11 +6,9 @@ import '../models/user.dart';
 import './chat_group.dart';
 import './call.dart';
 import '../component/event_bus.dart';
+import '../component/dioHttp.dart';
 
-Dio dio = new Dio();
-// dio.options.baseUrl = 'localhost:3000/api';
 var urlPath = DefaultConfig.urlPath;
-var baseUrl = DefaultConfig.baseUrl;
 var socketPath = DefaultConfig.socketPath;
 
 class ChatContactPage extends StatefulWidget {
@@ -25,13 +22,10 @@ class ChatContactPageState extends State<ChatContactPage> {
   List _searchUsers = [];
 
   _initUsers() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    uid = prefs.getInt('uid');
-    Response response = await dio
-        .get('$baseUrl/room/getUserFriends', queryParameters: {'uid': uid});
-    if (response.data['code'] == 0) {
+    var userRes = dioHttp.httpGet('/room/getUserFriends', needToken: true);
+    if (userRes != null) {
       List<User> temps = <User>[];
-      List friends = response.data['friends'];
+      List friends = userRes['friends'];
       for (var friend in friends) {
         temps.add(User.fromJson(friend));
       }
@@ -91,12 +85,10 @@ class ChatContactPageState extends State<ChatContactPage> {
                     subtitle: Text(user.ubio),
                     onTap: () async {
                       // insertChat  uid, fuid
-                      Response response = await dio.post(
-                        '$baseUrl/room/insertChat',
-                        data: {'uid': uid, 'fuid': user.uid},
-                      );
-                      if (response.data['code'] == 0) {
-                        var chatRoom = response.data['chat'];
+                      var rommRes = await dioHttp.httpPost('/room/insertChat',
+                          req: {'uid': uid, 'fuid': user.uid});
+                      if (rommRes != null) {
+                        var chatRoom = rommRes['chat'];
                         Navigator.push(context, MaterialPageRoute(
                           builder: (context) {
                             return RoomDetailPage(chatRoom['id'],
@@ -122,35 +114,28 @@ class SearchBarDelegate extends SearchDelegate<String> {
   TextEditingController _applyController = new TextEditingController();
 
   _sendApply(user, BuildContext context) async {
-    // verify_message: this.verify_message,
-    // apply_uid: this.userId,
-    // apply_flist_id: this.friendRoom.id,
-    // invitees_uid: this.applyUser.uid,
-    // invitees_flist_id: this.applyUser.flist_id
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int uid = await prefs.getInt('uid');
-    Response response = await dio.post('$baseUrl/room/createApply', data: {
+    int uid = prefs.getInt('uid');
+    var applyRes = await dioHttp.httpPost('/room/createApply', req: {
       'verify_message': _applyController.text,
       'apply_uid': uid,
       'invitees_uid': user['uid'],
       'invitees_flist_id': user['flist_id']
     });
-    if (response.data['code'] == 0) {
+    if (applyRes != null) {
       Navigator.pop(context);
       evtBus.emit(
           'message', {'type': 'apply', 'sendid': uid, 'toid': user['uid']});
-    } else {
-      print(response.data);
     }
   }
 
   @override
   void showResults(BuildContext context) async {
     // TODO: implement showResults
-    Response response = await dio.get('$baseUrl/room/searchUsersByName',
-        queryParameters: {'uname': query});
-    if (response.data['code'] == 0) {
-      _searchUsers = response.data['users'];
+    var userRes =
+        await dioHttp.httpGet('/room/searchUsersByName', req: {'uname': query});
+    if (userRes != null) {
+      _searchUsers = userRes['users'];
     }
     super.showResults(context);
   }
