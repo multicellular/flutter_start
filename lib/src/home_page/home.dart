@@ -7,6 +7,7 @@ import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../component/event_bus.dart';
 import '../models/config.dart';
@@ -32,6 +33,7 @@ class HomePageState extends State<HomePage> {
   List _messages = [];
   Database _db;
   var flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
+  AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -123,6 +125,7 @@ class HomePageState extends State<HomePage> {
           // 好友申请监听
           _initApply();
         } else if (msgJson['type'] == 'call') {
+          _audioPlayer.play('assets/call.mp3', isLocal: true);
           // 视频通话监听
           showDialog(
               context: context,
@@ -133,6 +136,7 @@ class HomePageState extends State<HomePage> {
                     Text(msgJson['sendid'].toString()),
                     RaisedButton(
                       onPressed: () {
+                        _audioPlayer.stop();
                         Navigator.pop(context);
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
@@ -145,6 +149,7 @@ class HomePageState extends State<HomePage> {
                     ),
                     RaisedButton(
                       onPressed: () {
+                        _audioPlayer.stop();
                         Navigator.pop(context);
                       },
                       child: Text('取消'),
@@ -197,7 +202,6 @@ class HomePageState extends State<HomePage> {
     evtBus.on('message', (message) {
       // _channel.sink.add('disconnect');
       String msg = json.encode(message);
-      print(msg);
       _channel.sink.add(msg);
     });
     // evtBus.off('sigin_in');

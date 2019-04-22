@@ -36,6 +36,7 @@ dependencies:
   flutter_local_notifications: ^0.6.0
   agora_rtc_engine: ^0.9.4
   fluttertoast: ^3.0.3
+  audioplayers: ^0.11.0
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +64,7 @@ flutter:
    - assets/images/chat_bg.jpeg
    - assets/images/text_bg_rtl.jpeg
    - assets/images/text_bg_ltr.jpeg
+   - assets/call.mp3
 
   #  - images/a_dot_ham.jpeg
 
