@@ -130,10 +130,8 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     String error;
 
     try {
-      resultList = await MultiImagePicker.pickImages(
-        maxImages: 9,
-        enableCamera: true
-      );
+      resultList =
+          await MultiImagePicker.pickImages(maxImages: 9, enableCamera: true);
     } catch (e) {
       error = e.message;
     }
@@ -177,7 +175,7 @@ class PostBlogDialogState extends State<PostBlogDialog> {
               maxLines: 4,
               maxLength: 200,
               maxLengthEnforced: true,
-              textInputAction: TextInputAction.send,
+              // textInputAction: TextInputAction.send,
               decoration: InputDecoration(
                 hintText: '说点什么吧...',
                 border: OutlineInputBorder(
@@ -250,23 +248,24 @@ class ForwardBlogDialog extends StatelessWidget {
           Container(
             margin: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
             child: TextFormField(
-                autofocus: true,
-                controller: _commentController,
-                keyboardType: TextInputType.multiline,
-                maxLines: 4,
-                maxLength: 200,
-                maxLengthEnforced: true,
-                textInputAction: TextInputAction.send,
-                decoration: InputDecoration(
-                  hintText: '说点什么吧...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(4)),
-                  ),
+              autofocus: true,
+              controller: _commentController,
+              keyboardType: TextInputType.multiline,
+              maxLines: 4,
+              maxLength: 200,
+              maxLengthEnforced: true,
+              // textInputAction: TextInputAction.send,
+              decoration: InputDecoration(
+                hintText: '说点什么吧...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
                 ),
-                onFieldSubmitted: (String value) {
-                  // _sendComment(value);
-                  Navigator.pop(context);
-                }),
+              ),
+              // onFieldSubmitted: (String value) {
+              //   // _sendComment(value);
+              //   Navigator.pop(context);
+              // },
+            ),
           ),
           BuildBlog(
               blog: blog, type: BuildBlog.forward_blog, showHeader: false),
