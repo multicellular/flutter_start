@@ -37,7 +37,6 @@ class ChatContactPageState extends State<ChatContactPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _initUsers();
   }
@@ -47,11 +46,8 @@ class ChatContactPageState extends State<ChatContactPage> {
     super.dispose();
   }
 
-  _sendMessage() {}
-
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(
         actions: <Widget>[
@@ -131,7 +127,6 @@ class SearchBarDelegate extends SearchDelegate<String> {
 
   @override
   void showResults(BuildContext context) async {
-    // TODO: implement showResults
     var userRes =
         await dioHttp.httpGet('/room/searchUsersByName', req: {'uname': query});
     if (userRes != null) {
@@ -238,7 +233,6 @@ class SearchBarDelegate extends SearchDelegate<String> {
 
   @override
   ThemeData appBarTheme(BuildContext context) {
-    // TODO: implement appBarTheme
     return super.appBarTheme(context);
   }
 }
@@ -298,7 +292,6 @@ class RoomDetailPageState extends State<RoomDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(),
       body: Padding(

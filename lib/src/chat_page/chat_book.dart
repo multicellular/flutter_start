@@ -13,7 +13,6 @@ class ChatBookPageState extends State<ChatBookPage> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectIndex,

@@ -8,14 +8,13 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' as Path;
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
 import '../models/config.dart';
 import '../models/user.dart';
 import '../component/event_bus.dart';
+import '../component/db_bus.dart';
 import '../chat_page/call.dart';
 import '../component/dioHttp.dart';
 import '../component/photo_view.dart';
@@ -82,7 +81,6 @@ class ChatGroupPageState extends State<ChatGroupPage>
   TextEditingController _messageController = new TextEditingController();
   IOWebSocketChannel _channel;
   int uid;
-  Database _db;
   bool _isLoadingMore = false;
 
   File _imageFile;
@@ -115,25 +113,13 @@ class ChatGroupPageState extends State<ChatGroupPage>
           _messages.insert(0, chatMessage);
         });
         chatMessage.animationController.forward();
-        _db.insert('local_messages', {
-          'msg': message,
-          'groupid': msgJson['roomid'],
-          'private': msgJson['private'] ? 1 : 0,
-          'read': 1
-        });
+        dbBus.insertMessage(message, isRead: true);
       });
     }
   }
 
-  _initDatabase() async {
-    var databasePath = await getDatabasesPath();
-    String path = Path.join(databasePath, 'message.db');
-    _db = await openDatabase(path, version: 1);
-  }
-
   _initRoomMessages() async {
-    await _initDatabase();
-    List results = await _db.query('local_messages',
+    List results = await dbBus.queryMessage(
         columns: ['localid', 'msg'],
         where: '"groupid"=?',
         whereArgs: [widget.roomid],
@@ -161,7 +147,7 @@ class ChatGroupPageState extends State<ChatGroupPage>
     setState(() {
       _isLoadingMore = true;
     });
-    List results = await _db.query('local_messages',
+    List results = await dbBus.queryMessage(
         columns: ['localid', 'msg'],
         where: '"groupid"=? and "localid"<?',
         whereArgs: [widget.roomid, _lastID],
@@ -213,7 +199,6 @@ class ChatGroupPageState extends State<ChatGroupPage>
     _channel.sink.close(status.goingAway);
     for (ChatMessage message in _messages)
       message.animationController.dispose();
-    _db.close();
     _controller.dispose();
   }
 

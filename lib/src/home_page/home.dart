@@ -1,15 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:audioplayers/audio_cache.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as Path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
-import 'package:sqflite/sqflite.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 import '../component/event_bus.dart';
+import '../component/db_bus.dart';
 import '../models/config.dart';
 import '../component/dioHttp.dart';
 
@@ -31,35 +32,15 @@ class HomePageState extends State<HomePage> {
   var _profile;
   IOWebSocketChannel _channel;
   List _messages = [];
-  Database _db;
   var flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
-  AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
     _initEvent();
-    _initDatabase();
     _initProfile();
     _initNotifications();
     _initApply();
-  }
-
-  _initDatabase() async {
-    var databasePath = await getDatabasesPath();
-    String path = Path.join(databasePath, 'message.db');
-    // deleteDatabase(path);
-    _db = await openDatabase(path, version: 1, onCreate: (db, version) async {
-      await db.execute('''
-            create table local_messages(
-              localid integer primary key autoincrement,
-              msg text not null,
-              read integer not null default 0,
-              groupid integer,
-              private integer
-            )
-          ''');
-    });
   }
 
   _initNotifications() {
@@ -119,44 +100,13 @@ class HomePageState extends State<HomePage> {
       int connectid = user['id'];
       _channel = IOWebSocketChannel.connect(socketPath + '/connect/$connectid');
       _channel.sink.add('connect');
-      _channel.stream.listen((message) {
+      _channel.stream.listen((message) async {
         var msgJson = json.decode(message);
         if (msgJson['type'] == 'apply') {
           // 好友申请监听
           _initApply();
         } else if (msgJson['type'] == 'call') {
-          _audioPlayer.play('assets/call.mp3', isLocal: true);
-          // 视频通话监听
-          showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return SimpleDialog(
-                  title: Text('视频聊天'),
-                  children: <Widget>[
-                    Text(msgJson['sendid'].toString()),
-                    RaisedButton(
-                      onPressed: () {
-                        _audioPlayer.stop();
-                        Navigator.pop(context);
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) {
-                          return CallPage(
-                            channelName: msgJson['roomid'].toString(),
-                          );
-                        }));
-                      },
-                      child: Text('接受'),
-                    ),
-                    RaisedButton(
-                      onPressed: () {
-                        _audioPlayer.stop();
-                        Navigator.pop(context);
-                      },
-                      child: Text('取消'),
-                    ),
-                  ],
-                );
-              });
+          _showCallDialog(msgJson);
         } else {
           // app聊天消息处理
           setState(() {
@@ -174,26 +124,58 @@ class HomePageState extends State<HomePage> {
 
   _handleMessage(message) async {
     var msgJson = json.decode(message);
-    int localeID = await _db.insert('local_messages', {
-      'msg': message,
-      'groupid': msgJson['roomid'],
-      'private': msgJson['private'] ? 1 : 0
-    });
+    int localeID = await dbBus.insertMessage(message);
     _showNotification(localeID, '', msgJson['content'], localeID.toString());
+  }
+
+  _showCallDialog(msgJson) async {
+    AudioPlayer _audioPlayer = await AudioCache().play('call.mp3');
+    // _audioPlayer.play('call1.mp3');
+    // 视频通话监听
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: Text('视频聊天'),
+            children: <Widget>[
+              Text(msgJson['sendid'].toString()),
+              RaisedButton(
+                onPressed: () {
+                  _audioPlayer.stop();
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return CallPage(
+                      channelName: msgJson['roomid'].toString(),
+                    );
+                  }));
+                },
+                child: Text('接受'),
+              ),
+              RaisedButton(
+                onPressed: () {
+                  _audioPlayer.stop();
+                  Navigator.pop(context);
+                },
+                child: Text('取消'),
+              ),
+            ],
+          );
+        });
   }
 
   @override
   void dispose() {
     super.dispose();
+    dbBus.dispose();
     _channel.sink.close(status.goingAway);
-    _db.close();
   }
 
   _initEvent() {
     evtBus.off('sigin_out');
     evtBus.on('sigin_out', (args) {
-      // _channel.sink.add('disconnect');
+      dbBus.dispose();
       _channel.sink.close(status.goingAway);
+      evtBus.off('message');
       setState(() {
         _profile = null;
       });

@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' as Path;
 
 import '../models/config.dart';
 import './chat_group.dart';
 import '../component/dioHttp.dart';
+import '../component/db_bus.dart';
 
 var urlPath = DefaultConfig.urlPath;
 var socketPath = DefaultConfig.socketPath;
@@ -55,8 +54,6 @@ class ChatRoomPage extends StatefulWidget {
 class ChatRoomPageState extends State<ChatRoomPage> {
   List<Room> _rooms = [];
   int uid;
-  Database _db;
-  List _localMessage = [];
 
   _initRooms() async {
     List res = await Future.wait([
@@ -77,17 +74,8 @@ class ChatRoomPageState extends State<ChatRoomPage> {
     });
   }
 
-  _initDatabase() async {
-    var databasePath = await getDatabasesPath();
-    String path = Path.join(databasePath, 'message.db');
-    _db = await openDatabase(path, version: 1);
-  }
-
   _initRoomMessages(room) async {
-    if (_db == null) {
-      await _initDatabase();
-    }
-    List results = await _db.query('local_messages',
+    List results = await dbBus.queryMessage(
         columns: ['msg'],
         where: '"groupid"=?',
         whereArgs: [room['id']],
@@ -102,21 +90,17 @@ class ChatRoomPageState extends State<ChatRoomPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    // _initDatabase();
     _initRooms();
   }
 
   @override
   void dispose() {
     super.dispose();
-    if (_db != null) _db.close();
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(),
       body: Padding(
