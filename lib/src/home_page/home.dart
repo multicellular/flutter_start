@@ -19,6 +19,7 @@ import '../login_page/profile.dart';
 import '../blog_page/blog_book.dart';
 import '../chat_page/chat_book.dart';
 import '../chat_page/call.dart';
+import 'game.dart';
 
 String urlPath = DefaultConfig.urlPath;
 String socketPath = DefaultConfig.socketPath;
@@ -26,6 +27,16 @@ String socketPath = DefaultConfig.socketPath;
 class HomePage extends StatefulWidget {
   @override
   HomePageState createState() => new HomePageState();
+
+  // final OAuth flutterOAuth = new FlutterOAuth(new Config(
+  //   "https://unsplash.com/oauth/authorize",
+  //   "https://unsplash.com/oauth/token",
+  //   "YOUR_CLIENT_ID",
+  //   "YOUR_CLIENT_SECRET",
+  //   "http://localhost:8080",
+  //   "code"));
+  // Token token = await flutterOAuth.performAuthorization();
+  // String accessToken = token.accessToken;
 }
 
 class HomePageState extends State<HomePage> {
@@ -296,32 +307,30 @@ class HomePageState extends State<HomePage> {
     // final TextStyle textStyle = Theme.of(context).textTheme.display1;
     return Scaffold(
       floatingActionButton: _profile != null
-          ? GestureDetector(
-              onTap: () {
+          ? FloatingActionButton(
+              heroTag: _profile['id'],
+              onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
                   return ProfilePage.withProfile(
                       {'uid': _profile['id'], 'uavator': _profile['avator']},
                       personal: true);
                 }));
               },
-              child: Hero(
-                tag: _profile['id'],
-                child: ClipOval(
-                  child: SizedBox(
-                    width: 60.0,
-                    height: 60.0,
-                    // child: Image.network(urlPath + _profile['avator'],
-                    //     fit: BoxFit.cover),
-                    child: CachedNetworkImage(
-                      fit: BoxFit.cover,
-                      placeholder: (context, string) {
-                        return Image.asset('assets/images/no_avatar.jpeg');
-                      },
-                      // errorWidget: (context, string, obj) {
-                      //   return Image.asset('assets/images/no_avatar.jpeg');
-                      // },
-                      imageUrl: urlPath + _profile['avator'],
-                    ),
+              child: ClipOval(
+                child: SizedBox(
+                  width: 60.0,
+                  height: 60.0,
+                  // child: Image.network(urlPath + _profile['avator'],
+                  //     fit: BoxFit.cover),
+                  child: CachedNetworkImage(
+                    fit: BoxFit.cover,
+                    placeholder: (context, string) {
+                      return Image.asset('assets/images/no_avatar.jpeg');
+                    },
+                    // errorWidget: (context, string, obj) {
+                    //   return Image.asset('assets/images/no_avatar.jpeg');
+                    // },
+                    imageUrl: urlPath + _profile['avator'],
                   ),
                 ),
               ),
@@ -335,6 +344,50 @@ class HomePageState extends State<HomePage> {
                 }));
               },
             ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      bottomNavigationBar: BottomAppBar(
+        // shape: CircularNotchedRectangle(),
+        color: const Color(0xFFf16d7e),
+        child: Row(
+          children: <Widget>[
+            IconButton(
+              icon: Icon(
+                Icons.mode_edit,
+                color: Colors.white70,
+              ),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return BlogPage();
+                }));
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.mode_comment,
+                color: Colors.white70,
+              ),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return _profile != null ? ChatBookPage() : LoginPage();
+                }));
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.games,
+                color: Colors.white70,
+              ),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return GamePage();
+                }));
+              },
+            ),
+            SizedBox(),
+          ],
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+        ),
+      ),
       body: DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -360,86 +413,18 @@ class HomePageState extends State<HomePage> {
             children: <Widget>[
               _buildMessage(),
               Container(
-                margin: EdgeInsets.only(top: 20),
+                margin: EdgeInsets.only(top: 120,bottom: 40),
                 child: Text(
-                  'Flutter allows you to build beautiful native apps on iOS and Android from a single codebase.',
+                  'With the time going,we always need to do something',
                   style: TextStyle(
                       color: Colors.white70,
                       letterSpacing: 2,
-                      fontSize: 22,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                       textBaseline: TextBaseline.alphabetic),
                 ),
               ),
-              Container(
-                margin: EdgeInsets.only(top: 20),
-                child: Text(
-                  '    Paint your app to life in milliseconds with stateful Hot Reload. Use a rich set of fully-customizable widgets to build native interfaces in minutes.',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 18,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.only(top: 20),
-                child: Text(
-                  '    Quickly ship features with a focus on native end-user experiences. Layered architecture allows for full customization, which results in incredibly fast rendering and expressive and flexible designs.',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 18,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.only(top: 20, bottom: 30),
-                child: Text(
-                  '    Flutter’s widgets incorporate all critical platform differences such as scrolling, navigation, icons and fonts to provide full native performance on both iOS and Android.',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 18,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-              Row(
-                children: <Widget>[
-                  Text(
-                    'GO TO PAGE: ',
-                    style: TextStyle(color: Colors.black45, fontSize: 18),
-                  ),
-                  IconButton(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    icon: Icon(
-                      Icons.mode_edit,
-                      size: 50,
-                      color: Colors.lightBlue,
-                    ),
-                    onPressed: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return BlogPage();
-                      }));
-                    },
-                  ),
-                  IconButton(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    icon: Icon(
-                      Icons.mode_comment,
-                      size: 50,
-                      color: Colors.lightBlue,
-                    ),
-                    onPressed: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return _profile != null ? ChatBookPage() : LoginPage();
-                      }));
-                    },
-                  ),
-                ],
-              ),
+              // Image.asset('assets/images/launch.jpeg')
             ],
           )),
     );

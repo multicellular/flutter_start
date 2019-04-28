@@ -329,7 +329,9 @@ class MyBlogPageState extends State<MyBlogPage> {
                                   '/blog/deleteBlog',
                                   req: {'blogid': blog['id']});
                               if (res != null) {
-                                Navigator.pop(context);
+                                setState(() {
+                                  blogs.removeAt(index);
+                                });
                               }
                             },
                             itemBuilder: (BuildContext context) {
