@@ -304,12 +304,12 @@ class HomePageState extends State<HomePage> {
                   //     fit: BoxFit.cover),
                   child: CachedNetworkImage(
                     fit: BoxFit.cover,
-                    placeholder: (context, string) {
-                      return Image.asset('assets/images/no_avatar.jpeg');
-                    },
-                    // errorWidget: (context, string, obj) {
+                    // placeholder: (context, string) {
                     //   return Image.asset('assets/images/no_avatar.jpeg');
                     // },
+                    errorWidget: (context, string, obj) {
+                      return Image.asset('assets/images/no_avatar.jpeg');
+                    },
                     imageUrl: urlPath + _profile['avator'],
                   ),
                 ),
