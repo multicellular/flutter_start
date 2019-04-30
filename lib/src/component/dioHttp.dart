@@ -15,14 +15,20 @@ class DioHttp {
   factory DioHttp() => _dioHttp;
   Dio dio = new Dio();
 
-  httpGet(path, {req, needToken = false}) async {
+  httpGet(path, {req, needToken = false, showTip = true}) async {
     Options options;
     // TODO 目前普遍传uid，后期修改
     if (needToken) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String token = prefs.getString('token');
-      if (token != null && token.isNotEmpty)
+      if (token != null && token.isNotEmpty) {
         options = Options(headers: {HttpHeaders.authorizationHeader: token});
+      } else {
+        if (showTip) {
+          showToast('please login!', type: ToastType.error());
+        }
+        return Future.value();
+      }
       int uid = prefs.get('uid');
       if (req == null) {
         req = <String, dynamic>{};
@@ -46,14 +52,21 @@ class DioHttp {
     });
   }
 
-  httpPost(path, {req, needToken = false}) async {
+  httpPost(path, {req, needToken = false, showTip = true}) async {
     Options options;
     // TODO 目前普遍传uid，后期修改
     if (needToken) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String token = prefs.getString('token');
-      if (token != null && token.isNotEmpty)
+      if (token != null && token.isNotEmpty) {
         options = Options(headers: {HttpHeaders.authorizationHeader: token});
+      } else {
+        if (showTip) {
+          showToast('please login!', type: ToastType.error());
+        }
+        return Future.value();
+      }
+
       int uid = prefs.get('uid');
       req['uid'] = uid;
     }

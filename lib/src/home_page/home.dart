@@ -95,7 +95,8 @@ class HomePageState extends State<HomePage> {
   }
 
   _initProfile() async {
-    var userRes = await dioHttp.httpGet('/user/info', needToken: true);
+    var userRes =
+        await dioHttp.httpGet('/user/info', needToken: true, showTip: false);
     if (userRes != null) {
       var user = userRes['user'];
       int connectid = user['id'];
