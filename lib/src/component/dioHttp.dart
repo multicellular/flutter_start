@@ -64,9 +64,7 @@ class DioHttp {
         // return response.data;
         return response.data;
       } else {
-        String msg = response.data['msg'] != null
-            ? response.data['msg']
-            : 'server error !';
+        String msg = response.data['msg'] ?? 'server error !';
         showToast(msg, type: ToastType.error());
         // return Future.error(msg);
       }

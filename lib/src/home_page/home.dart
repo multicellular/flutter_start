@@ -15,6 +15,7 @@ import '../models/config.dart';
 import '../component/dioHttp.dart';
 
 import '../login_page/login.dart';
+import '../login_page/login1.dart';
 import '../login_page/profile.dart';
 import '../blog_page/blog_book.dart';
 import '../chat_page/chat_book.dart';
@@ -27,16 +28,6 @@ String socketPath = DefaultConfig.socketPath;
 class HomePage extends StatefulWidget {
   @override
   HomePageState createState() => new HomePageState();
-
-  // final OAuth flutterOAuth = new FlutterOAuth(new Config(
-  //   "https://unsplash.com/oauth/authorize",
-  //   "https://unsplash.com/oauth/token",
-  //   "YOUR_CLIENT_ID",
-  //   "YOUR_CLIENT_SECRET",
-  //   "http://localhost:8080",
-  //   "code"));
-  // Token token = await flutterOAuth.performAuthorization();
-  // String accessToken = token.accessToken;
 }
 
 class HomePageState extends State<HomePage> {
@@ -141,7 +132,6 @@ class HomePageState extends State<HomePage> {
 
   _showCallDialog(msgJson) async {
     AudioPlayer _audioPlayer = await AudioCache().play('call.mp3');
-    // _audioPlayer.play('call1.mp3');
     // 视频通话监听
     showDialog(
         context: context,
@@ -229,9 +219,7 @@ class HomePageState extends State<HomePage> {
                       var apply = _applys[index];
                       return Row(
                         children: <Widget>[
-                          Text(apply['verify_message'] != null
-                              ? apply['verify_message']
-                              : ''),
+                          Text(apply['verify_message'] ?? ''),
                           IconButton(
                             icon: Icon(Icons.close),
                             onPressed: () async {
@@ -289,13 +277,6 @@ class HomePageState extends State<HomePage> {
         margin: EdgeInsets.only(top: 20),
         child: new ListTile(title: new Text('$content')),
       );
-      // String content = _messages.last['content'];
-      // widget = Container(
-      //   height: 20,
-      //   color: Colors.white,
-      //   margin: EdgeInsets.only(top: 10, left: 10),
-      //   child: Text(content),
-      // );
     }
     return new Builder(builder: (BuildContext context) {
       return widget;
@@ -340,7 +321,8 @@ class HomePageState extends State<HomePage> {
               label: Text('sigin in'),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return LoginPage();
+                  // return LoginPage();
+                  return LoginOnePage();
                 }));
               },
             ),
@@ -413,7 +395,7 @@ class HomePageState extends State<HomePage> {
             children: <Widget>[
               _buildMessage(),
               Container(
-                margin: EdgeInsets.only(top: 120,bottom: 40),
+                margin: EdgeInsets.only(top: 120, bottom: 40),
                 child: Text(
                   'With the time going,we always need to do something',
                   style: TextStyle(

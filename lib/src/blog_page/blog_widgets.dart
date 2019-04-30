@@ -188,10 +188,7 @@ class BuildBlog extends StatelessWidget {
                           errorWidget: (context, string, obj) {
                             return Image.asset('assets/images/no_avatar.jpeg');
                           },
-                          imageUrl: urlPath +
-                              (blog['uavator'] == null
-                                  ? 'null'
-                                  : blog['uavator']),
+                          imageUrl: urlPath + (blog['uavator'] ?? ''),
                         ),
                       ),
                     ),
@@ -209,7 +206,7 @@ class BuildBlog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            blog['uname'] != null ? blog['uname'] : '',
+                            blog['uname'] ?? '',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
@@ -223,7 +220,7 @@ class BuildBlog extends StatelessWidget {
                 ),
               )
             : Container(),
-        // 评论内容 转���时的评�� type区分是否为转发
+        // 评论内容 转���时的评��� type区分是否为转发
         type == BuildBlog.forward_blog
             ? Container(
                 child: forwardComment.isNotEmpty

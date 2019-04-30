@@ -52,10 +52,10 @@ class LoginPageState extends State<LoginPage> {
         body: DecoratedBox(
           decoration: BoxDecoration(
             // image: Image.asset('assets/images/login_bg.jpg',fit: BoxFit.fill),
-            image: DecorationImage(
-              image: AssetImage('assets/images/login_bg.jpg'),
-              fit: BoxFit.fill,
-            ),
+            // image: DecorationImage(
+            //   image: AssetImage('assets/images/login_bg.jpg'),
+            //   fit: BoxFit.fill,
+            // ),
             borderRadius: BorderRadius.circular(3.0), //3像素圆角
             boxShadow: [
               //阴影

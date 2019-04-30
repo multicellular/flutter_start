@@ -22,7 +22,8 @@ class ChatContactPageState extends State<ChatContactPage> {
   List _searchUsers = [];
 
   _initUsers() async {
-    var userRes = await dioHttp.httpGet('/room/getUserFriends', needToken: true);
+    var userRes =
+        await dioHttp.httpGet('/room/getUserFriends', needToken: true);
     if (userRes != null) {
       List<User> temps = <User>[];
       List friends = userRes['friends'];
@@ -75,9 +76,7 @@ class ChatContactPageState extends State<ChatContactPage> {
                       backgroundImage: new CachedNetworkImageProvider(
                           urlPath + user.uavator),
                     ),
-                    title: Text(user.uremark != null && user.uremark.isNotEmpty
-                        ? user.uremark
-                        : user.uname),
+                    title: Text(user.uremark ?? user.uname),
                     subtitle: Text(user.ubio),
                     onTap: () async {
                       // insertChat  uid, fuid
@@ -180,9 +179,8 @@ class SearchBarDelegate extends SearchDelegate<String> {
                   // backgroundImage: NetworkImage(urlPath + comment['uavator']),
                   backgroundImage: NetworkImage(urlPath + user['uavator']),
                 ),
-                title: Text(
-                    user['uremark'] != null ? user['uremark'] : user['uname']),
-                subtitle: Text(user['ubio'] != null ? user['ubio'] : ''),
+                title: Text(user['uremark'] ?? user['uname']),
+                subtitle: Text(user['ubio'] ?? ''),
                 onTap: () {
                   showDialog(
                       context: context,
@@ -265,8 +263,7 @@ class RoomDetailPageState extends State<RoomDetailPage> {
               errorWidget: (context, string, obj) {
                 return Image.asset('assets/images/no_avatar.jpeg');
               },
-              imageUrl:
-                  urlPath + (user.uavator == null ? 'null' : user.uavator),
+              imageUrl: urlPath + (user.uavator ?? ''),
             ),
           ),
         ),
@@ -276,7 +273,7 @@ class RoomDetailPageState extends State<RoomDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                user.uname != null ? user.uname : '',
+                user.uname ?? '',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               Text(
