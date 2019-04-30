@@ -3,18 +3,21 @@ import '../component/dioHttp.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../component/event_bus.dart';
 import '../home_page/home.dart';
-
-import './register.dart';
+import 'register.dart';
+// import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
+// import 'package:flutter_ui_challenges/src/pages/login/signup1.dart';
 
 class LoginPage extends StatefulWidget {
   @override
-  LoginPageState createState() => new LoginPageState();
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    return LoginPageState();
+  }
 }
 
 class LoginPageState extends State<LoginPage> {
   TextEditingController _unameController = new TextEditingController();
   TextEditingController _pwdController = new TextEditingController();
-  // GlobalKey _fromKey = new GlobalKey();
 
   _signIn() async {
     dioHttp.httpPost('/user/signin', req: {
@@ -28,7 +31,7 @@ class LoginPageState extends State<LoginPage> {
         await prefs.setInt('uid', user['id']);
         await prefs.setString('token', 'Bearer $token');
         evtBus.emit('sigin_in');
-        if (context.toString().indexOf('LoginPage') > -1 ||
+        if (context.toString().indexOf('LoginOnePage') > -1 ||
             context.toString().indexOf('RegisterPage') > -1) {
           Navigator.push(context, MaterialPageRoute(builder: (context) {
             return HomePage();
@@ -41,128 +44,168 @@ class LoginPageState extends State<LoginPage> {
     // Map<String, dynamic> res = response.data;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // final TextStyle textStyle = Theme.of(context).textTheme.display1;
-
-    return Scaffold(
-        appBar: AppBar(
-          title: Text("Login"),
-        ),
-        body: DecoratedBox(
-          decoration: BoxDecoration(
-            // image: Image.asset('assets/images/login_bg.jpg',fit: BoxFit.fill),
-            // image: DecorationImage(
-            //   image: AssetImage('assets/images/login_bg.jpg'),
-            //   fit: BoxFit.fill,
-            // ),
-            borderRadius: BorderRadius.circular(3.0), //3像素圆角
-            boxShadow: [
-              //阴影
-              BoxShadow(
-                  color: Colors.black54,
-                  offset: Offset(2.0, 2.0),
-                  blurRadius: 4.0)
+  Widget _buildPageContent(BuildContext context) {
+    return Container(
+      color: Colors.blue.shade100,
+      child: ListView(
+        children: <Widget>[
+          SizedBox(
+            height: 30.0,
+          ),
+          // CircleAvatar(child: Image.asset('assets/images/no_avatar.jpeg'), maxRadius: 50, backgroundColor: Colors.transparent,),
+          SizedBox(
+            height: 20.0,
+          ),
+          _buildLoginForm(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => SignupPage()));
+                },
+                child: Text("Sign Up",
+                    style: TextStyle(color: Colors.blue, fontSize: 18.0)),
+              )
             ],
           ),
-          child: Container(
-            margin: EdgeInsets.only(top: 20, left: 20, right: 20),
-            child: Form(
-              // key: _fromKey,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              FloatingActionButton(
+                mini: true,
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.arrow_back),
+              )
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Container _buildLoginForm() {
+    return Container(
+      padding: EdgeInsets.all(20.0),
+      child: Stack(
+        children: <Widget>[
+          ClipPath(
+            // clipper: RoundedDiagonalPathClipper(),
+            child: Container(
+              height: 400,
+              padding: EdgeInsets.all(10.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(40.0)),
+                color: Colors.white,
+              ),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  TextFormField(
-                    autofocus: true,
-                    controller: _unameController,
-                    decoration: InputDecoration(
-                        hintText: '用户名或邮箱',
-                        labelText: '用户名',
-                        icon: Icon(Icons.person)),
+                  SizedBox(
+                    height: 90.0,
                   ),
-                  TextFormField(
-                    controller: _pwdController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                        hintText: '请输入密码',
-                        labelText: '密码',
-                        icon: Icon(Icons.lock)),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          width: 150,
-                          child: RaisedButton(
-                            color: Colors.blue,
-                            highlightColor: Colors.blue[700],
-                            colorBrightness: Brightness.dark,
-                            // splashColor: Colors.grey,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0)),
-                            child: Text('登录'),
-                            onPressed: () {
-                              _signIn();
-                            },
-                          ),
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 20),
-                          child: RaisedButton(
-                            child: Text('注册'),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0)),
-                            onPressed: () {
-                              Navigator.push(context,
-                                  MaterialPageRoute(builder: (context) {
-                                return RegisterPage();
-                              }));
-                            },
-                          ),
-                        ),
-                      ],
+                  Container(
+                      padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      child: TextField(
+                        controller: _unameController,
+                        style: TextStyle(color: Colors.blue),
+                        decoration: InputDecoration(
+                            hintText: "Email address",
+                            hintStyle: TextStyle(color: Colors.blue.shade200),
+                            border: InputBorder.none,
+                            icon: Icon(
+                              Icons.email,
+                              color: Colors.blue,
+                            )),
+                      )),
+                  Container(
+                    child: Divider(
+                      color: Colors.blue.shade400,
                     ),
-                  )
+                    padding:
+                        EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
+                  ),
+                  Container(
+                      padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      child: TextField(
+                        controller: _pwdController,
+                        style: TextStyle(color: Colors.blue),
+                        decoration: InputDecoration(
+                            hintText: "Password",
+                            hintStyle: TextStyle(color: Colors.blue.shade200),
+                            border: InputBorder.none,
+                            icon: Icon(
+                              Icons.lock,
+                              color: Colors.blue,
+                            )),
+                      )),
+                  Container(
+                    child: Divider(
+                      color: Colors.blue.shade400,
+                    ),
+                    padding:
+                        EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      Container(
+                          padding: EdgeInsets.only(right: 20.0),
+                          child: Text(
+                            "Forgot Password",
+                            style: TextStyle(color: Colors.black45),
+                          ))
+                    ],
+                  ),
+                  SizedBox(
+                    height: 10.0,
+                  ),
                 ],
               ),
             ),
           ),
-        ));
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              SizedBox(height: 100),
+              CircleAvatar(
+                radius: 40.0,
+                backgroundColor: Colors.blue.shade600,
+                child: Icon(Icons.child_care),
+              ),
+            ],
+          ),
+          Container(
+            height: 420,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: RaisedButton(
+                onPressed: () {
+                  _signIn();
+                },
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40.0)),
+                child: Text("Login", style: TextStyle(color: Colors.white70)),
+                color: Colors.blue,
+              ),
+            ),
+          )
+        ],
+      ),
+    );
   }
-}
-
-class InputWidget extends StatelessWidget {
-  final double topRight;
-  final double bottomRight;
-
-  InputWidget(this.topRight, this.bottomRight);
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(right: 40, bottom: 30),
-      child: Container(
-        width: MediaQuery.of(context).size.width - 40,
-        child: Material(
-          elevation: 10,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                  bottomRight: Radius.circular(bottomRight),
-                  topRight: Radius.circular(topRight))),
-          child: Padding(
-            padding: EdgeInsets.only(left: 40, right: 20, top: 10, bottom: 10),
-            child: TextField(
-              decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "JohnDoe@example.com",
-                  hintStyle: TextStyle(color: Color(0xFFE1E1E1), fontSize: 14)),
-            ),
-          ),
-        ),
-      ),
+    return Scaffold(
+      body: _buildPageContent(context),
     );
   }
 }
