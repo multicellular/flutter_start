@@ -76,7 +76,9 @@ class ChatContactPageState extends State<ChatContactPage> {
                       backgroundImage: new CachedNetworkImageProvider(
                           urlPath + user.uavator),
                     ),
-                    title: Text(user.uremark ?? user.uname),
+                    title: Text(user.uremark != null && user.uremark.isNotEmpty
+                        ? user.uremark
+                        : user.uname),
                     subtitle: Text(user.ubio),
                     onTap: () async {
                       // insertChat  uid, fuid

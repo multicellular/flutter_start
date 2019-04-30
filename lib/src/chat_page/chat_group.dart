@@ -252,10 +252,10 @@ class ChatGroupPageState extends State<ChatGroupPage>
         body: DecoratedBox(
           decoration: BoxDecoration(
             // image: Image.asset('assets/images/login_bg.jpg',fit: BoxFit.fill),
-            image: DecorationImage(
-              image: AssetImage('assets/images/chat_bg.jpeg'),
-              fit: BoxFit.fill,
-            ),
+            // image: DecorationImage(
+            //   image: AssetImage('assets/images/chat_bg.jpeg'),
+            //   fit: BoxFit.fill,
+            // ),
             borderRadius: BorderRadius.circular(3.0), //3像素圆角
           ),
           child: Padding(
@@ -349,7 +349,7 @@ class ChatGroupPageState extends State<ChatGroupPage>
                       child: Form(
                         child: TextFormField(
                           controller: _messageController,
-                          autofocus: true,
+                          // autofocus: true,
                           // keyboardType: TextInputType.multiline,
                           // maxLines: 4,
                           // maxLength: 1000,

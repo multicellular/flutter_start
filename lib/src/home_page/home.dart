@@ -15,7 +15,6 @@ import '../models/config.dart';
 import '../component/dioHttp.dart';
 
 import '../login_page/login.dart';
-import '../login_page/login1.dart';
 import '../login_page/profile.dart';
 import '../blog_page/blog_book.dart';
 import '../chat_page/chat_book.dart';
@@ -322,7 +321,7 @@ class HomePageState extends State<HomePage> {
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
                   // return LoginPage();
-                  return LoginOnePage();
+                  return LoginPage();
                 }));
               },
             ),

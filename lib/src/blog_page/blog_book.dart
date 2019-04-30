@@ -5,6 +5,7 @@ import './blog_send.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
 import '../home_page/home.dart';
+import '../chat_page/chat_book.dart';
 import '../component/dioHttp.dart';
 
 var urlPath = DefaultConfig.urlPath;
@@ -83,34 +84,58 @@ class BlogPageState extends State<BlogPage> {
             ),
           ],
         ),
-        drawer: Drawer(),
-        bottomNavigationBar: BottomAppBar(
-          shape: CircularNotchedRectangle(),
-          child: Row(
+        drawer: Drawer(
+          child: ListView(
             children: <Widget>[
-              IconButton(
-                icon: Icon(Icons.home),
-                iconSize: 50,
-                onPressed: () {
+              SizedBox(height: 90,),
+              ListTile(
+                leading: Icon(Icons.home),
+                title: Text('Home'),
+                onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return HomePage();
                   }));
                 },
               ),
-              SizedBox(),
-              IconButton(
-                icon: Icon(Icons.group),
-                iconSize: 50,
-                onPressed: () {
-                  // Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  //   return ChatRoomPage();
-                  // }));
+              ListTile(
+                leading: Icon(Icons.chat),
+                title: Text('Chat'),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return ChatBookPage();
+                  }));
                 },
               )
             ],
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
           ),
         ),
+        // bottomNavigationBar: BottomAppBar(
+        //   shape: CircularNotchedRectangle(),
+        //   child: Row(
+        //     children: <Widget>[
+        //       IconButton(
+        //         icon: Icon(Icons.home),
+        //         iconSize: 50,
+        //         onPressed: () {
+        //           Navigator.push(context, MaterialPageRoute(builder: (context) {
+        //             return HomePage();
+        //           }));
+        //         },
+        //       ),
+        //       SizedBox(),
+        //       IconButton(
+        //         icon: Icon(Icons.group),
+        //         iconSize: 50,
+        //         onPressed: () {
+        //           // Navigator.push(context, MaterialPageRoute(builder: (context) {
+        //           //   return ChatRoomPage();
+        //           // }));
+        //         },
+        //       )
+        //     ],
+        //     mainAxisAlignment: MainAxisAlignment.spaceAround,
+        //   ),
+        // ),
         floatingActionButton: FloatingActionButton(
           child: Icon(Icons.add_circle_outline),
           onPressed: () async {
@@ -129,7 +154,7 @@ class BlogPageState extends State<BlogPage> {
             }
           },
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         body: Column(
           children: <Widget>[
             isRefreshing
