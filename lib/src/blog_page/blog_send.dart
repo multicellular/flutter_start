@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hello_flutter/src/component/toast.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:geocoder/geocoder.dart';
+import 'package:location/location.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
 import '../component/dioHttp.dart';
@@ -23,6 +25,14 @@ class PostBlogDialogState extends State<PostBlogDialog> {
   File _video;
   bool _isPrivate = false;
   bool _isSending = false;
+  //Strings required to save address
+  Address address;
+
+  @override
+  initState() {
+    super.initState();
+    // initLocation();
+  }
 
   _postBlog() async {
     if (_isSending) {
@@ -118,8 +128,85 @@ class PostBlogDialogState extends State<PostBlogDialog> {
                 onPressed: () async {
                   _video = await FilePicker.getFile(type: FileType.VIDEO);
                 }),
+        Expanded(
+          flex: 1,
+          child: PopupMenuButton<String>(
+            offset: Offset(30, 40),
+            child: IconButton(
+              icon: Icon(Icons.add_location),
+              onPressed: () async {
+                if (address == null) {
+                  address = await getUserLocation();
+                }
+              },
+            ),
+            // overflow menu
+            onSelected: (value) async {},
+            itemBuilder: (BuildContext context) {
+              return address == null
+                  ? Text('定位中...')
+                  : [
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: buildLocationButton(address.featureName),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: buildLocationButton(address.subLocality),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: buildLocationButton(address.locality),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: buildLocationButton(address.subAdminArea),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: buildLocationButton(address.adminArea),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: buildLocationButton(address.countryName),
+                      ),
+                    ];
+            },
+          ),
+        ),
       ],
     );
+  }
+
+  //method to build buttons with location.
+  buildLocationButton(String locationName) {
+    if (locationName != null ?? locationName.isNotEmpty) {
+      return InkWell(
+        onTap: () {
+          // locationController.text = locationName;
+        },
+        child: Center(
+          child: Container(
+            //width: 100.0,
+            height: 30.0,
+            padding: EdgeInsets.only(left: 8.0, right: 8.0),
+            margin: EdgeInsets.only(right: 3.0, left: 3.0),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(5.0),
+            ),
+            child: Center(
+              child: Text(
+                locationName,
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Container();
+    }
   }
 
   Future<void> loadAssets() async {
@@ -145,6 +232,31 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     setState(() {
       _images.addAll(resultList);
     });
+  }
+
+  getUserLocation() async {
+    LocationData currentLocation;
+    String error;
+    Location location = Location();
+    try {
+      currentLocation = await location.getLocation();
+    } catch (e) {
+      if (e.code == 'PERMISSION_DENIED') {
+        error = 'please grant permission';
+        print(error);
+      }
+      if (e.code == 'PERMISSION_DENIED_NEVER_ASK') {
+        error = 'permission denied- please enable it from app settings';
+        print(error);
+      }
+      currentLocation = null;
+    }
+    final coordinates =
+        Coordinates(currentLocation.latitude, currentLocation.longitude);
+    var addresses =
+        await Geocoder.local.findAddressesFromCoordinates(coordinates);
+    var first = addresses.first;
+    return first;
   }
 
   @override
@@ -275,3 +387,11 @@ class ForwardBlogDialog extends StatelessWidget {
     );
   }
 }
+
+/* File to get location of user
+* used dependencies - location => to get location coordinates of user,
+*   - geoLocation => To get Address from the location coordinates
+ */
+// import 'package:flutter/services.dart';
+// import 'package:geocoder/geocoder.dart';
+// import 'package:location/location.dart';

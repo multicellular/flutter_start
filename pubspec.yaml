@@ -38,6 +38,8 @@ dependencies:
   fluttertoast: ^3.0.3
   audioplayers: ^0.11.0
   # flutter_generic_oauth: ^1.0.0
+  geocoder: ^0.1.2
+  location: ^2.3.5
 dev_dependencies:
   flutter_test:
     sdk: flutter
