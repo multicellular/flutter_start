@@ -18,7 +18,6 @@ class ChatContactPage extends StatefulWidget {
 
 class ChatContactPageState extends State<ChatContactPage> {
   List<User> users = [];
-  int uid;
   List _searchUsers = [];
 
   _initUsers() async {
@@ -82,6 +81,9 @@ class ChatContactPageState extends State<ChatContactPage> {
                     subtitle: Text(user.ubio),
                     onTap: () async {
                       // insertChat  uid, fuid
+                      SharedPreferences prefs =
+                          await SharedPreferences.getInstance();
+                      int uid = prefs.getInt('uid');
                       var rommRes = await dioHttp.httpPost('/room/insertChat',
                           req: {'uid': uid, 'fuid': user.uid});
                       if (rommRes != null) {

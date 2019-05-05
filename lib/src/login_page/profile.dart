@@ -2,15 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dio/dio.dart';
 import '../component/event_bus.dart';
 import '../models/config.dart';
+import '../component/dioHttp.dart';
 
-// Options options = new BaseOptions(baseUrl: 'localhost:3000/api');
-// Dio dio = new Dio(options);
-Dio dio = new Dio();
-// dio.options.baseUrl = 'localhost:3000/api';
-String baseUrl = DefaultConfig.baseUrl;
 var urlPath = DefaultConfig.urlPath;
 
 class ProfilePage extends StatefulWidget {
@@ -39,13 +34,10 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   _initProfile(uid) async {
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // String token = await prefs.getString('token');
-    Response response =
-        await dio.get('$baseUrl/user/profile', queryParameters: {'uid': uid});
-    if (response.data['code'] == 0) {
+    var userRes = await dioHttp.httpGet('/user/profile', req: {'uid': uid});
+    if (userRes != null) {
       setState(() {
-        _profile = response.data['profile'];
+        _profile = userRes['profile'];
       });
     }
   }
@@ -82,12 +74,12 @@ class ProfilePageState extends State<ProfilePage> {
                 // width: 100.0,
                 // height: 100.0,
                 fit: BoxFit.cover,
-                placeholder: (context, string) {
-                  return Image.asset('assets/images/no_avatar.jpeg');
-                },
-                // errorWidget: (context, string, obj) {
+                // placeholder: (context, string) {
                 //   return Image.asset('assets/images/no_avatar.jpeg');
                 // },
+                errorWidget: (context, string, obj) {
+                  return Image.asset('assets/images/no_avatar.jpeg');
+                },
                 imageUrl: urlPath + _profile['uavator'],
               ),
             ),

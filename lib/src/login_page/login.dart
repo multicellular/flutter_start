@@ -31,8 +31,8 @@ class LoginPageState extends State<LoginPage> {
         await prefs.setInt('uid', user['id']);
         await prefs.setString('token', 'Bearer $token');
         evtBus.emit('sigin_in');
-        if (context.toString().indexOf('LoginOnePage') > -1 ||
-            context.toString().indexOf('RegisterPage') > -1) {
+        if (context.toString().indexOf('LoginPage') > -1 ||
+            context.toString().indexOf('SignupPage') > -1) {
           Navigator.push(context, MaterialPageRoute(builder: (context) {
             return HomePage();
           }));
