@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:hello_flutter/src/component/kf_drawer.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 
 import '../component/event_bus.dart';
 import '../component/db_bus.dart';
@@ -16,7 +20,7 @@ import '../component/dioHttp.dart';
 
 import '../login_page/login.dart';
 import '../login_page/profile.dart';
-import '../blog_page/blog_book.dart';
+// import '../blog_page/blog_book.dart';
 import '../chat_page/chat_book.dart';
 import '../chat_page/call.dart';
 import 'game.dart';
@@ -24,7 +28,7 @@ import 'game.dart';
 String urlPath = DefaultConfig.urlPath;
 String socketPath = DefaultConfig.socketPath;
 
-class HomePage extends StatefulWidget {
+class HomePage extends KFDrawerContent {
   @override
   HomePageState createState() => new HomePageState();
 }
@@ -42,6 +46,7 @@ class HomePageState extends State<HomePage> {
     _initProfile();
     _initNotifications();
     _initApply();
+    // _initUpdate();
   }
 
   _initNotifications() {
@@ -58,6 +63,7 @@ class HomePageState extends State<HomePage> {
   Future _onDidRecieveLocalNotification(
       int id, String title, String body, String payload) {
     // onDidRecieveLocalNotification 这个是IOS端接收到通知所作的处理的方法
+    return null;
   }
   Future _onSelectNotification(String payload) {
     int localeID = int.parse(payload);
@@ -65,6 +71,7 @@ class HomePageState extends State<HomePage> {
     Navigator.push(context, MaterialPageRoute(builder: (context) {
       return ChatBookPage();
     }));
+    return null;
   }
 
   Future _showNotification(
@@ -90,9 +97,9 @@ class HomePageState extends State<HomePage> {
   }
 
 //删除所有通知
-  Future _cancelAllNotifications() async {
-    await flutterLocalNotificationsPlugin.cancelAll();
-  }
+  // Future _cancelAllNotifications() async {
+  //   await flutterLocalNotificationsPlugin.cancelAll();
+  // }
 
   _initProfile() async {
     var userRes =
@@ -268,6 +275,33 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  _initUpdate() async {
+    final directory = Platform.isAndroid
+        ? await getExternalStorageDirectory()
+        : await getApplicationDocumentsDirectory();
+    String _localPath = directory.path + '/download';
+    FlutterDownloader.registerCallback((id, status, progress) {
+      print(
+          'Download task ($id) is in status ($status) and process ($progress)');
+      if (status == DownloadTaskStatus.complete) {
+        // OpenFile.open(_localPath);
+        FlutterDownloader.open(taskId: id);
+      }
+    });
+    // final taskId = 
+    await FlutterDownloader.enqueue(
+      url:
+          'http://www.lovepean.xyz:3000/files/upload_896d5a9eba19e5049455367c251e9f0b.jpg',
+      savedDir: _localPath,
+      showNotification:
+          true, // show download progress in status bar (for Android)
+      openFileFromNotification:
+          true, // click on notification to open downloaded file (for Android)
+    );
+    // final tasks = 
+    await FlutterDownloader.loadTasks();
+  }
+
   Widget _buildMessage() {
     Widget widget = Container();
     if (_messages.length > 0) {
@@ -333,27 +367,34 @@ class HomePageState extends State<HomePage> {
         child: Row(
           children: <Widget>[
             IconButton(
-              icon: Icon(
-                Icons.mode_edit,
-                color: Colors.white70,
-              ),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return BlogPage();
-                }));
-              },
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.mode_comment,
-                color: Colors.white70,
-              ),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return _profile != null ? ChatBookPage() : LoginPage();
-                }));
-              },
-            ),
+                icon: Icon(
+                  Icons.menu,
+                  color: Colors.white70,
+                  size: 40,
+                ),
+                onPressed: widget.onMenuPressed),
+            // IconButton(
+            //   icon: Icon(
+            //     Icons.mode_edit,
+            //     color: Colors.white70,
+            //   ),
+            //   onPressed: () {
+            //     Navigator.push(context, MaterialPageRoute(builder: (context) {
+            //       return BlogPage();
+            //     }));
+            //   },
+            // ),
+            // IconButton(
+            //   icon: Icon(
+            //     Icons.mode_comment,
+            //     color: Colors.white70,
+            //   ),
+            //   onPressed: () {
+            //     Navigator.push(context, MaterialPageRoute(builder: (context) {
+            //       return _profile != null ? ChatBookPage() : LoginPage();
+            //     }));
+            //   },
+            // ),
             IconButton(
               icon: Icon(
                 Icons.games,
@@ -363,6 +404,15 @@ class HomePageState extends State<HomePage> {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
                   return GamePage();
                 }));
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.file_download,
+                color: Colors.white70,
+              ),
+              onPressed: () {
+                _initUpdate();
               },
             ),
             SizedBox(),

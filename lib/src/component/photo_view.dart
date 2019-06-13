@@ -24,8 +24,8 @@ class PhotoViewPageState extends State<PhotoViewPage> {
     List<PhotoViewGalleryPageOptions> temp = [];
     for (var image in widget.images) {
       PhotoViewGalleryPageOptions widget = PhotoViewGalleryPageOptions(
-        imageProvider: CachedNetworkImageProvider(image),
-        heroTag: image,
+        imageProvider: CachedNetworkImageProvider(image['url']),
+        heroTag: image['tag'],
       );
       temp.add(widget);
     }
@@ -59,7 +59,7 @@ class PhotoViewPageState extends State<PhotoViewPage> {
           child: PhotoViewGallery(
             pageController: PageController(initialPage: widget.page),
             pageOptions: _widgets,
-            backgroundDecoration: BoxDecoration(color: Colors.black87),
+            backgroundDecoration: BoxDecoration(color: Colors.black54),
             onPageChanged: (int index) {
               setState(() {
                 _page = index + 1;

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as Path;
 import 'dart:convert';
@@ -30,7 +29,8 @@ class DBCommon {
   }
 
   Future<int> insertMessage(message, {bool isRead = false}) async {
-    if (_db == null) {
+    
+    if (_db == null || !_db.isOpen) {
       await initMessageDB();
     }
     var msgJson = json.decode(message);
@@ -53,7 +53,7 @@ class DBCommon {
       String orderBy,
       int limit,
       int offset}) async {
-    if (_db == null) {
+    if (_db == null || !_db.isOpen) {
       await initMessageDB();
     }
     return await _db.query(

@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:hello_flutter/src/component/kf_drawer.dart';
 import './blog_detail.dart';
 import './blog_send.dart';
 import './blog_widgets.dart';
 import '../models/config.dart';
-import '../home_page/home.dart';
-import '../chat_page/chat_book.dart';
+// import '../home_page/home.dart';
+// import '../chat_page/chat_book.dart';
 import '../component/dioHttp.dart';
 
 var urlPath = DefaultConfig.urlPath;
 
-class BlogPage extends StatefulWidget {
+class BlogPage extends KFDrawerContent {
   @override
   BlogPageState createState() => new BlogPageState();
 }
@@ -59,6 +60,10 @@ class BlogPageState extends State<BlogPage> {
         appBar: AppBar(
           title: Text('Blog'),
           actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.menu),
+              onPressed: widget.onMenuPressed,
+            ),
             PopupMenuButton<String>(
               offset: Offset(30, 40),
               // overflow menu
@@ -84,31 +89,31 @@ class BlogPageState extends State<BlogPage> {
             ),
           ],
         ),
-        drawer: Drawer(
-          child: ListView(
-            children: <Widget>[
-              SizedBox(height: 90,),
-              ListTile(
-                leading: Icon(Icons.home),
-                title: Text('Home'),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return HomePage();
-                  }));
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.chat),
-                title: Text('Chat'),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return ChatBookPage();
-                  }));
-                },
-              )
-            ],
-          ),
-        ),
+        // drawer: Drawer(
+        //   child: ListView(
+        //     children: <Widget>[
+        //       SizedBox(height: 90,),
+        //       ListTile(
+        //         leading: Icon(Icons.home),
+        //         title: Text('Home'),
+        //         onTap: () {
+        //           Navigator.push(context, MaterialPageRoute(builder: (context) {
+        //             return HomePage();
+        //           }));
+        //         },
+        //       ),
+        //       ListTile(
+        //         leading: Icon(Icons.chat),
+        //         title: Text('Chat'),
+        //         onTap: () {
+        //           Navigator.push(context, MaterialPageRoute(builder: (context) {
+        //             return ChatBookPage();
+        //           }));
+        //         },
+        //       )
+        //     ],
+        //   ),
+        // ),
         // bottomNavigationBar: BottomAppBar(
         //   shape: CircularNotchedRectangle(),
         //   child: Row(

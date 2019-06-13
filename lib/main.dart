@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
-// import 'package:dio/dio.dart';
-import './src/home_page/home.dart';
-
-// BaseOptions options = new BaseOptions(
-//   baseUrl: "http//localhost:3000/api",
-//   connectTimeout: 5000,
-//   receiveTimeout: 3000,
-// );
-// Dio dio = new Dio(options);
+// import './src/home_page/home.dart';
+import './src/home_page/home2.dart';
 
 void main() => runApp(MyApp());
 
@@ -20,6 +13,7 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: HomePage());
+    // return MaterialApp(home: HomePage());
+    return MaterialApp(home: MainWidget());
   }
 }

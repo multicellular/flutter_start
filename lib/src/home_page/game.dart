@@ -11,7 +11,6 @@ import 'dart:async';
 class GamePage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
-    // TODO: implement createState
     return _GamePageState();
   }
 }
@@ -36,22 +35,22 @@ class _GamePageState extends State<GamePage> {
           number = "";
         } else if (num == 2 || num == 4) {
           color = MyColor.gridColorTwoFour;
-          number = "${num}";
+          number = "$num";
         } else if (num == 8 || num == 64 || num == 256) {
           color = MyColor.gridColorEightSixtyFourTwoFiftySix;
-          number = "${num}";
+          number = "$num";
         } else if (num == 16 || num == 32 || num == 1024) {
           color = MyColor.gridColorSixteenThirtyTwoOneZeroTwoFour;
-          number = "${num}";
+          number = "$num";
         } else if (num == 128 || num == 512) {
           color = MyColor.gridColorOneTwentyEightFiveOneTwo;
-          number = "${num}";
+          number = "$num";
         } else {
           color = MyColor.gridColorWin;
-          number = "${num}";
+          number = "$num";
         }
         double size;
-        String n = "${number}";
+        String n = "$number";
         switch (n.length) {
           case 1:
           case 2:
@@ -163,7 +162,6 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     grid = blankGrid();
     gridNew = blankGrid();
     addNumber(grid, gridNew);
@@ -182,7 +180,6 @@ class _GamePageState extends State<GamePage> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     double width = MediaQuery.of(context).size.width;
     double gridWidth = (width - 80) / 4;
     double gridHeight = gridWidth;
@@ -226,7 +223,7 @@ class _GamePageState extends State<GamePage> {
                       Padding(
                         padding: EdgeInsets.only(bottom: 10.0),
                         child: Text(
-                          '${score}',
+                          '$score',
                           style: TextStyle(
                               fontSize: 20.0,
                               color: Colors.white,
@@ -406,7 +403,6 @@ class Tile extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    // TODO: implement createState
     return _TileState();
   }
 }
@@ -414,7 +410,6 @@ class Tile extends StatefulWidget {
 class _TileState extends State<Tile> {
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Container(
       child: Center(
         child: Text(

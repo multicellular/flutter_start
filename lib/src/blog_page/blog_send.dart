@@ -215,13 +215,13 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     // });
 
     List<Asset> resultList;
-    String error;
+    // String error;
 
     try {
       resultList =
           await MultiImagePicker.pickImages(maxImages: 9, enableCamera: true);
     } catch (e) {
-      error = e.message;
+      // error = e.message;
     }
 
     // If the widget was removed from the tree while the asynchronous platform

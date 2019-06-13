@@ -46,11 +46,11 @@ class BuildBlog extends StatelessWidget {
   }
 
   Widget _initMediaWidget(
-      String mediaType, String mediaUrls, BuildContext context) {
+      String mediaType, String mediaUrls, BuildContext context, String tag) {
     return Container(
       margin: EdgeInsets.all(10),
       child: mediaType == 'image'
-          ? _initImages(mediaUrls, context)
+          ? _initImages(mediaUrls, context, tag)
           : GestureDetector(
               child: Image.asset('assets/images/video_default.jpg'),
               onTap: () {
@@ -60,14 +60,15 @@ class BuildBlog extends StatelessWidget {
     );
   }
 
-  _previewImage(String imageUrls, BuildContext context, int page) {
+  _previewImage(String imageUrls, BuildContext context, int page, String tag) {
     List images = [];
     List viewImages = [];
     if (imageUrls.isNotEmpty) {
       images = imageUrls.split(',');
     }
     for (var image in images) {
-      viewImages.add(urlPath + image);
+      // viewImages.add(urlPath + image);
+      viewImages.add({'tag': tag, 'url': urlPath + image});
     }
     Navigator.push(
       context,
@@ -100,7 +101,7 @@ class BuildBlog extends StatelessWidget {
         ));
   }
 
-  Widget _initImages(String imagesStr, BuildContext context) {
+  Widget _initImages(String imagesStr, BuildContext context, String tag) {
     List images = [];
     if (imagesStr.isNotEmpty) {
       images = imagesStr.split(',');
@@ -119,10 +120,10 @@ class BuildBlog extends StatelessWidget {
       //     height: 100,
       //     fit: BoxFit.cover);
       Widget widget = Hero(
-          tag: urlPath + image,
+          tag: tag + image,
           child: GestureDetector(
             onTap: () {
-              _previewImage(imagesStr, context, i);
+              _previewImage(imagesStr, context, i, tag + image);
             },
             child: CachedNetworkImage(
               width: 300,
@@ -220,7 +221,7 @@ class BuildBlog extends StatelessWidget {
                 ),
               )
             : Container(),
-        // 评论内容 转���时的评��� type区分是否为转发
+        // 评论内容 转���时的评����� type区分是否为转发
         type == BuildBlog.forward_blog
             ? Container(
                 child: forwardComment.isNotEmpty
@@ -242,7 +243,8 @@ class BuildBlog extends StatelessWidget {
               _initContentWidget(
                   uname: sourceUname, uid: scurceUid, context: context),
               // 博客媒资 media_type区分 图片或视频或文件
-              _initMediaWidget(blog['media_type'], blog['media_urls'], context),
+              _initMediaWidget(
+                  blog['media_type'], blog['media_urls'], context, blog['id'].toString()),
             ],
           ),
         ),
