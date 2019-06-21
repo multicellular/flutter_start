@@ -138,6 +138,8 @@ class AppWidgetState extends State<AppWidget> {
           _initApply();
         } else if (msgJson['type'] == 'call') {
           _showCallDialog(msgJson);
+          // 本地notification通知
+          _showNotification(1000, '', 'calling', '1000');
         } else {
           // app聊天消息处理
           setState(() {
