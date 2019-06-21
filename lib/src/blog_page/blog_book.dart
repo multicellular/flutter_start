@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:hello_flutter/src/component/kf_drawer.dart';
+import '../component/kf_drawer.dart';
 import './blog_detail.dart';
 import './blog_send.dart';
 import './blog_widgets.dart';

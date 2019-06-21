@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 // import './src/home_page/home.dart';
-import './src/home_page/home2.dart';
+import './src/home_page/app.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(Main());
 
-class MyApp extends StatefulWidget {
+class Main extends StatefulWidget {
   // This widget is the root of your application.
   @override
-  MyAppState createState() => new MyAppState();
+  MainState createState() => new MainState();
 }
 
-class MyAppState extends State<MyApp> {
+class MainState extends State<Main> {
   @override
   Widget build(BuildContext context) {
     // return MaterialApp(home: HomePage());
-    return MaterialApp(home: MainWidget());
+    return MaterialApp(home: AppWidget());
   }
 }

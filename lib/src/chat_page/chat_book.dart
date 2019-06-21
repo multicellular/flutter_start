@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hello_flutter/src/component/kf_drawer.dart';
+
+import '../component/kf_drawer.dart';
 import './chat_contact.dart';
 import './chat_room.dart';
 

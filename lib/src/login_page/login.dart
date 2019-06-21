@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:hello_flutter/src/home_page/home2.dart';
-import '../component/dioHttp.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../component/dioHttp.dart';
 import '../component/event_bus.dart';
-// import '../home_page/home.dart';
+import '../home_page/app.dart';
 import 'register.dart';
-// import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
-// import 'package:flutter_ui_challenges/src/pages/login/signup1.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -34,7 +32,7 @@ class LoginPageState extends State<LoginPage> {
         if (context.toString().indexOf('LoginPage') > -1 ||
             context.toString().indexOf('SignupPage') > -1) {
           Navigator.push(context, MaterialPageRoute(builder: (context) {
-            return MainWidget();
+            return AppWidget();
           }));
         } else {
           Navigator.pop(context);

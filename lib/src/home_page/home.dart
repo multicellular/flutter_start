@@ -1,28 +1,14 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-import 'package:audioplayers/audio_cache.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:hello_flutter/src/component/kf_drawer.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/status.dart' as status;
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../component/event_bus.dart';
-import '../component/db_bus.dart';
+import '../component/kf_drawer.dart';
 import '../models/config.dart';
-import '../component/dioHttp.dart';
-
 import '../login_page/login.dart';
 import '../login_page/profile.dart';
-// import '../blog_page/blog_book.dart';
-import '../chat_page/chat_book.dart';
-import '../chat_page/call.dart';
 import 'game.dart';
 
 String urlPath = DefaultConfig.urlPath;
@@ -35,244 +21,21 @@ class HomePage extends KFDrawerContent {
 
 class HomePageState extends State<HomePage> {
   var _profile;
-  IOWebSocketChannel _channel;
-  List _messages = [];
-  var flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
     _initEvent();
-    _initProfile();
-    _initNotifications();
-    _initApply();
     // _initUpdate();
   }
 
-  _initNotifications() {
-    var initializationSettingsAndroid =
-        new AndroidInitializationSettings('app_icon');
-    var initializationSettingsIOS = new IOSInitializationSettings(
-        onDidReceiveLocalNotification: _onDidRecieveLocalNotification);
-    var initializationSettings = new InitializationSettings(
-        initializationSettingsAndroid, initializationSettingsIOS);
-    flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onSelectNotification: _onSelectNotification);
-  }
-
-  Future _onDidRecieveLocalNotification(
-      int id, String title, String body, String payload) {
-    // onDidRecieveLocalNotification 这个是IOS端接收到通知所作的处理的方法
-    return null;
-  }
-  Future _onSelectNotification(String payload) {
-    int localeID = int.parse(payload);
-    _cancelNotification(localeID);
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return ChatBookPage();
-    }));
-    return null;
-  }
-
-  Future _showNotification(
-      int localeID, String title, String conetnt, String payload) async {
-    //安卓的通知配置，必填参数是渠道id, 名称, 和描述, 可选填通知的图标，重要度等等。
-    var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
-        'id', 'name', 'description',
-        importance: Importance.Max, priority: Priority.High);
-    //IOS的通知配置
-    var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
-    var platformChannelSpecifics = new NotificationDetails(
-        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
-    //显示通知，其中 0 代表通知的 id，用于区分通知。
-    await flutterLocalNotificationsPlugin.show(
-        localeID, title, conetnt, platformChannelSpecifics,
-        payload: payload);
-  }
-
-  //删除单个通知
-  Future _cancelNotification(id) async {
-    //参数 0 为需要删除的通知的id
-    await flutterLocalNotificationsPlugin.cancel(id);
-  }
-
-//删除所有通知
-  // Future _cancelAllNotifications() async {
-  //   await flutterLocalNotificationsPlugin.cancelAll();
-  // }
-
-  _initProfile() async {
-    var userRes =
-        await dioHttp.httpGet('/user/info', needToken: true, showTip: false);
-    if (userRes != null) {
-      var user = userRes['user'];
-      int connectid = user['id'];
-      _channel = IOWebSocketChannel.connect(socketPath + '/connect/$connectid');
-      _channel.sink.add('connect');
-      _channel.stream.listen((message) async {
-        var msgJson = json.decode(message);
-        if (msgJson['type'] == 'apply') {
-          // 好友申请监听
-          _initApply();
-        } else if (msgJson['type'] == 'call') {
-          _showCallDialog(msgJson);
-        } else {
-          // app聊天消息处理
-          setState(() {
-            _messages.add(msgJson);
-          });
-          _handleMessage(message);
-        }
-      });
-      setState(() {
-        _profile = user;
-      });
-    }
-    // }
-  }
-
-  _handleMessage(message) async {
-    var msgJson = json.decode(message);
-    int localeID = await dbBus.insertMessage(message);
-    _showNotification(localeID, '', msgJson['content'], localeID.toString());
-  }
-
-  _showCallDialog(msgJson) async {
-    AudioPlayer _audioPlayer = await AudioCache().play('call.mp3');
-    // 视频通话监听
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return SimpleDialog(
-            title: Text('视频聊天'),
-            children: <Widget>[
-              Text(msgJson['sendid'].toString()),
-              RaisedButton(
-                onPressed: () {
-                  _audioPlayer.stop();
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return CallPage(
-                      channelName: msgJson['roomid'].toString(),
-                    );
-                  }));
-                },
-                child: Text('接受'),
-              ),
-              RaisedButton(
-                onPressed: () {
-                  _audioPlayer.stop();
-                  Navigator.pop(context);
-                },
-                child: Text('取消'),
-              ),
-            ],
-          );
-        });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    dbBus.dispose();
-    _channel.sink.close(status.goingAway);
-  }
-
   _initEvent() {
-    evtBus.off('sigin_out');
-    evtBus.on('sigin_out', (args) {
-      dbBus.dispose();
-      _channel.sink.close(status.goingAway);
-      evtBus.off('message');
+    evtBus.off('profile_update');
+    evtBus.on('profile_update', (args) {
       setState(() {
-        _profile = null;
+        _profile = args;
       });
     });
-    evtBus.off('message');
-    evtBus.on('message', (message) {
-      // _channel.sink.add('disconnect');
-      String msg = json.encode(message);
-      _channel.sink.add(msg);
-    });
-    // evtBus.off('sigin_in');
-    // evtBus.on('sigin_in', (args) {
-    //   _initProfile();
-    // });
-  }
-
-  _initApply() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int uid = prefs.getInt('uid');
-    if (uid == null) {
-      return;
-    }
-    var applyRes =
-        await dioHttp.httpGet('/room/findApply', req: {'invitees_uid': uid});
-
-    if (applyRes != null && applyRes['applys'].length > 0) {
-      var _applys = applyRes['applys'];
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text('好友申请'),
-              children: <Widget>[
-                Container(
-                  width: 200,
-                  height: 300,
-                  child: ListView.separated(
-                    itemCount: _applys.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      var apply = _applys[index];
-                      return Row(
-                        children: <Widget>[
-                          Text(apply['verify_message'] ?? ''),
-                          IconButton(
-                            icon: Icon(Icons.close),
-                            onPressed: () async {
-                              var result = await dioHttp.httpPost(
-                                  '/room/ignoreApply',
-                                  req: {'applyid': apply['id']});
-                              if (result != null) {
-                                _applys.removeAt(index);
-                                if (_applys.length == 0) {
-                                  Navigator.pop(context);
-                                }
-                              }
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.check),
-                            onPressed: () async {
-                              var result = await dioHttp.httpPost(
-                                '/room/allowJoinFriend',
-                                req: {
-                                  'apply_uid': apply['apply_uid'],
-                                  'apply_flist_id': apply['apply_flist_id'],
-                                  'invitees_uid': apply['invitees_uid'],
-                                  'invitees_flist_id':
-                                      apply['invitees_flist_id'],
-                                  'applyId': apply['id']
-                                },
-                              );
-                              if (result != null) {
-                                _applys.removeAt(index);
-                                if (_applys.length == 0) {
-                                  Navigator.pop(context);
-                                }
-                              }
-                            },
-                          )
-                        ],
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {},
-                  ),
-                ),
-              ],
-            );
-          });
-    }
   }
 
   _initUpdate() async {
@@ -288,7 +51,7 @@ class HomePageState extends State<HomePage> {
         FlutterDownloader.open(taskId: id);
       }
     });
-    // final taskId = 
+    // final taskId =
     await FlutterDownloader.enqueue(
       url:
           'http://www.lovepean.xyz:3000/files/upload_896d5a9eba19e5049455367c251e9f0b.jpg',
@@ -298,24 +61,24 @@ class HomePageState extends State<HomePage> {
       openFileFromNotification:
           true, // click on notification to open downloaded file (for Android)
     );
-    // final tasks = 
+    // final tasks =
     await FlutterDownloader.loadTasks();
   }
 
-  Widget _buildMessage() {
-    Widget widget = Container();
-    if (_messages.length > 0) {
-      String content = _messages.last['content'];
-      widget = Container(
-        color: Colors.white30,
-        margin: EdgeInsets.only(top: 20),
-        child: new ListTile(title: new Text('$content')),
-      );
-    }
-    return new Builder(builder: (BuildContext context) {
-      return widget;
-    });
-  }
+  // Widget _buildMessage() {
+  //   Widget widget = Container();
+  //   if (_messages.length > 0) {
+  //     String content = _messages.last['content'];
+  //     widget = Container(
+  //       color: Colors.white30,
+  //       margin: EdgeInsets.only(top: 20),
+  //       child: new ListTile(title: new Text('$content')),
+  //     );
+  //   }
+  //   return new Builder(builder: (BuildContext context) {
+  //     return widget;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -373,28 +136,6 @@ class HomePageState extends State<HomePage> {
                   size: 40,
                 ),
                 onPressed: widget.onMenuPressed),
-            // IconButton(
-            //   icon: Icon(
-            //     Icons.mode_edit,
-            //     color: Colors.white70,
-            //   ),
-            //   onPressed: () {
-            //     Navigator.push(context, MaterialPageRoute(builder: (context) {
-            //       return BlogPage();
-            //     }));
-            //   },
-            // ),
-            // IconButton(
-            //   icon: Icon(
-            //     Icons.mode_comment,
-            //     color: Colors.white70,
-            //   ),
-            //   onPressed: () {
-            //     Navigator.push(context, MaterialPageRoute(builder: (context) {
-            //       return _profile != null ? ChatBookPage() : LoginPage();
-            //     }));
-            //   },
-            // ),
             IconButton(
               icon: Icon(
                 Icons.games,
@@ -443,7 +184,7 @@ class HomePageState extends State<HomePage> {
           child: ListView(
             padding: const EdgeInsets.all(20.0),
             children: <Widget>[
-              _buildMessage(),
+              // _buildMessage(),
               Container(
                 margin: EdgeInsets.only(top: 120, bottom: 40),
                 child: Text(

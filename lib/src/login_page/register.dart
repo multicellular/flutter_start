@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:hello_flutter/src/home_page/home2.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../component/event_bus.dart';
 import '../component/dioHttp.dart';
-// import '../home_page/home.dart';
-// import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
+import '../home_page/app.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -41,7 +40,7 @@ class SignupPageState extends State {
       if (context.toString().indexOf('LoginPage') > -1 ||
           context.toString().indexOf('SignupPage') > -1) {
         Navigator.push(context, MaterialPageRoute(builder: (context) {
-          return MainWidget();
+          return AppWidget();
         }));
       } else {
         Navigator.pop(context);
