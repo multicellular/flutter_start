@@ -9,9 +9,9 @@ class User {
   User.fromJson(Map<String, dynamic> json)
       : uid = json['uid'],
         uname = json['uname'],
-        uavator = json['uavator'] != null ? json['uavator'] : '',
-        uremark = json['uremark'] != null ? json['uremark'] : '',
-        ubio = json['ubio'] != null ? json['ubio'] : '';
+        uavator = json['uavator'] ?? '',
+        uremark = json['uremark'] ?? '',
+        ubio = json['ubio'] ?? '';
 
   User filterUser(int uid, List users) {
     return User.fromJson(users.firstWhere((user) => uid == user['uid']));

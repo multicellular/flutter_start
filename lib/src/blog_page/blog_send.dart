@@ -182,7 +182,7 @@ class PostBlogDialogState extends State<PostBlogDialog> {
 
   //method to build buttons with location.
   buildLocationButton(String locationName) {
-    if (locationName != null ?? locationName.isNotEmpty) {
+    if (locationName != null && locationName.isNotEmpty) {
       return InkWell(
         onTap: () {
           // locationController.text = locationName;
