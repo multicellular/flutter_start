@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:barcode_scan/barcode_scan.dart';
 
 import '../component/event_bus.dart';
 import '../component/kf_drawer.dart';
@@ -21,6 +22,7 @@ class HomePage extends KFDrawerContent {
 
 class HomePageState extends State<HomePage> {
   var _profile;
+  String barcode;
 
   @override
   void initState() {
@@ -63,6 +65,29 @@ class HomePageState extends State<HomePage> {
     );
     // final tasks =
     await FlutterDownloader.loadTasks();
+  }
+
+    Future scan() async {
+    try {
+      String barcode = await BarcodeScanner.scan();
+      setState(() {
+        return this.barcode = barcode;
+      });
+    } catch (e) {
+      if (e.code == BarcodeScanner.CameraAccessDenied) {
+        setState(() {
+          return this.barcode = 'The user did not grant the camera permission!';
+        });
+      } else {
+        setState(() {
+          return this.barcode = 'Unknown error: $e';
+        });
+      }
+    } on FormatException{
+      setState(() => this.barcode = 'null (User returned using the "back"-button before scanning anything. Result)');
+    } catch (e) {
+      setState(() => this.barcode = 'Unknown error: $e');
+    }
   }
 
   // Widget _buildMessage() {
@@ -156,6 +181,15 @@ class HomePageState extends State<HomePage> {
                 _initUpdate();
               },
             ),
+            IconButton(
+              icon: Icon(
+                Icons.scanner,
+                color: Colors.white70,
+              ),
+              onPressed: () {
+                scan();
+              },
+            ),
             SizedBox(),
           ],
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -198,6 +232,7 @@ class HomePageState extends State<HomePage> {
                 ),
               ),
               // Image.asset('assets/images/launch.jpeg')
+              Text(barcode??'')
             ],
           )),
     );
