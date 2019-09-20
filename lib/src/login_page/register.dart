@@ -155,26 +155,26 @@ class SignupPageState extends State {
                     padding:
                         EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
                   ),
-                  // Container(
-                  //     padding: EdgeInsets.symmetric(horizontal: 20.0),
-                  //     child: TextField(
-                  //       style: TextStyle(color: Colors.blue),
-                  //       decoration: InputDecoration(
-                  //           hintText: "Confirm password",
-                  //           hintStyle: TextStyle(color: Colors.blue.shade200),
-                  //           border: InputBorder.none,
-                  //           icon: Icon(
-                  //             Icons.lock,
-                  //             color: Colors.blue,
-                  //           )),
-                  //     )),
-                  // Container(
-                  //   child: Divider(
-                  //     color: Colors.blue.shade400,
-                  //   ),
-                  //   padding:
-                  //       EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
-                  // ),
+                  Container(
+                      padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      child: TextField(
+                        style: TextStyle(color: Colors.blue),
+                        decoration: InputDecoration(
+                            hintText: "Confirm password",
+                            hintStyle: TextStyle(color: Colors.blue.shade200),
+                            border: InputBorder.none,
+                            icon: Icon(
+                              Icons.lock,
+                              color: Colors.blue,
+                            )),
+                      )),
+                  Container(
+                    child: Divider(
+                      color: Colors.blue.shade400,
+                    ),
+                    padding:
+                        EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
+                  ),
                   SizedBox(
                     height: 10.0,
                   ),
