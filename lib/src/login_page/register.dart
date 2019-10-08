@@ -24,7 +24,7 @@ class SignupPageState extends State {
     FormData formData = new FormData.from(
         {'file': new UploadFileInfo(_imageFile, _imageFile.path)});
     var res = await dioHttp.httpPost('/uploadFile', req: formData);
-    String avatorUrl = res['urls'];
+    String avatorUrl = res != null ? res['urls'] : '';
     var userRes = await dioHttp.httpPost('/user/signup', req: {
       'name': _unameController.text,
       'password': _pwdController.text,
