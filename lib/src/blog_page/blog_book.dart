@@ -20,6 +20,7 @@ class BlogPageState extends State<BlogPage> {
   List blogs = [];
   ScrollController _controller = new ScrollController();
   bool isRefreshing = false;
+  String _tip = 'no data';
   // CircularProgressIndicator progressIndicator = CircularProgressIndicator();
 
   _initData() async {
@@ -30,6 +31,10 @@ class BlogPageState extends State<BlogPage> {
     if (blogRes != null) {
       setState(() {
         blogs = blogRes['blogs'];
+        isRefreshing = false;
+      });
+    } else {
+      setState(() {
         isRefreshing = false;
       });
     }
@@ -167,7 +172,7 @@ class BlogPageState extends State<BlogPage> {
                     color: Colors.blue,
                     size: 50.0,
                   )
-                : Container(),
+                : blogs.length > 0 ? Text(_tip) : Container(),
             Expanded(
               child: ListView.builder(
                 controller: _controller,

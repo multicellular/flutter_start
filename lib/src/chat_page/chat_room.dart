@@ -61,8 +61,8 @@ class ChatRoomPageState extends State<ChatRoomPage> {
       dioHttp.httpGet('/room/getUserChats', needToken: true),
     ]);
     List<Room> _temps = <Room>[];
-    List tempRooms = res[0]['rooms'];
-    List tempChats = res[1]['chats'];
+    List tempRooms = res[0]!=null ? res[0]['rooms'] : [];
+    List tempChats = res[1]!=null ? res[1]['chats'] : [];
     tempChats.addAll(tempRooms);
     for (var room in tempChats) {
       var message = await _initRoomMessages(room);

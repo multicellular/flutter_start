@@ -138,7 +138,7 @@ class _CallPageState extends State<CallPage> {
   /// Create a native view and add a new video session object
   /// The native viewId can be used to set up local/remote view
   void _addRenderView(int uid, Function(int viewId) finished) {
-    Widget view = AgoraRtcEngine.createNativeView(uid, (viewId) {
+    Widget view = AgoraRtcEngine.createNativeView((viewId) {
       setState(() {
         _getVideoSession(uid).viewId = viewId;
         if (finished != null) {

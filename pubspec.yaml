@@ -1,4 +1,5 @@
-name: hello_flutter
+# name: hello_flutter
+name: awesome_flutter
 description: A new Flutter project.
 
 # The following defines the version and build number for your application.
@@ -45,7 +46,7 @@ dependencies:
   #本地消息通知
   flutter_local_notifications: ^0.6.0
   #声网
-  agora_rtc_engine: ^0.9.4
+  agora_rtc_engine: ^1.0.0
   fluttertoast: ^3.0.3
   audioplayers: ^0.13.1
   #获取坐标位置信息
