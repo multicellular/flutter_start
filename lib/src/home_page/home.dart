@@ -11,6 +11,7 @@ import '../models/config.dart';
 import '../login_page/login.dart';
 import '../login_page/profile.dart';
 import 'game.dart';
+import 'demo001.dart';
 
 String urlPath = DefaultConfig.urlPath;
 String socketPath = DefaultConfig.socketPath;
@@ -67,7 +68,7 @@ class HomePageState extends State<HomePage> {
     await FlutterDownloader.loadTasks();
   }
 
-    Future scan() async {
+  Future scan() async {
     try {
       String barcode = await BarcodeScanner.scan();
       setState(() {
@@ -83,8 +84,9 @@ class HomePageState extends State<HomePage> {
           return this.barcode = 'Unknown error: $e';
         });
       }
-    } on FormatException{
-      setState(() => this.barcode = 'null (User returned using the "back"-button before scanning anything. Result)');
+    } on FormatException {
+      setState(() => this.barcode =
+          'null (User returned using the "back"-button before scanning anything. Result)');
     } catch (e) {
       setState(() => this.barcode = 'Unknown error: $e');
     }
@@ -172,24 +174,69 @@ class HomePageState extends State<HomePage> {
                 }));
               },
             ),
-            IconButton(
+            PopupMenuButton(
+              // overflow menu
+              offset: Offset(0, -180),
+              color: Color(0xFFb853c0),
               icon: Icon(
-                Icons.file_download,
+                Icons.more,
                 color: Colors.white70,
               ),
-              onPressed: () {
-                _initUpdate();
+              onSelected: (val) {
+                switch (val) {
+                  case 'demo001':
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return RunBall();
+                    }));
+                    break;
+                  case 'file_download':
+                    _initUpdate();
+                    break;
+                  case 'scan':
+                    scan();
+                    break;
+                  default:
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem<String>(
+                    value: 'demo001',
+                    child: Text('demo001',
+                        style: TextStyle(color: Colors.white54)),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'file_download',
+                    child: Text('file_download',
+                        style: TextStyle(color: Colors.white54)),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'scan',
+                    child:
+                        Text('scan', style: TextStyle(color: Colors.white54)),
+                  ),
+                ];
               },
             ),
-            IconButton(
-              icon: Icon(
-                Icons.scanner,
-                color: Colors.white70,
-              ),
-              onPressed: () {
-                scan();
-              },
-            ),
+            // IconButton(
+            //   icon: Icon(
+            //     Icons.file_download,
+            //     color: Colors.white70,
+            //   ),
+            //   onPressed: () {
+            //     _initUpdate();
+            //   },
+            // ),
+            // IconButton(
+            //   icon: Icon(
+            //     Icons.scanner,
+            //     color: Colors.white70,
+            //   ),
+            //   onPressed: () {
+            //     scan();
+            //   },
+            // ),
             SizedBox(),
           ],
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -232,7 +279,7 @@ class HomePageState extends State<HomePage> {
                 ),
               ),
               // Image.asset('assets/images/launch.jpeg')
-              Text(barcode??'')
+              Text(barcode ?? '')
             ],
           )),
     );
