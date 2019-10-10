@@ -4,15 +4,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:geocoder/geocoder.dart';
-import 'package:location/location.dart';
+// import 'package:geocoder/geocoder.dart';
+// import 'package:location/location.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 
 import './blog_widgets.dart';
 import '../models/config.dart';
 import '../component/dioHttp.dart';
 import '../component/toast.dart';
-
 
 var urlPath = DefaultConfig.urlPath;
 
@@ -28,7 +27,7 @@ class PostBlogDialogState extends State<PostBlogDialog> {
   bool _isPrivate = false;
   bool _isSending = false;
   //Strings required to save address
-  Address address;
+  // Address address;
 
   @override
   initState() {
@@ -137,42 +136,42 @@ class PostBlogDialogState extends State<PostBlogDialog> {
             child: IconButton(
               icon: Icon(Icons.add_location),
               onPressed: () async {
-                if (address == null) {
-                  address = await getUserLocation();
-                }
+                // if (address == null) {
+                //   address = await getUserLocation();
+                // }
               },
             ),
             // overflow menu
             onSelected: (value) async {},
             itemBuilder: (BuildContext context) {
-              return address == null
-                  ? Text('定位中...')
-                  : [
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: buildLocationButton(address.featureName),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: buildLocationButton(address.subLocality),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: buildLocationButton(address.locality),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: buildLocationButton(address.subAdminArea),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: buildLocationButton(address.adminArea),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: buildLocationButton(address.countryName),
-                      ),
-                    ];
+              // return address == null
+              //     ? Text('定位中...')
+              //     : [
+              //         PopupMenuItem<String>(
+              //           value: 'delete',
+              //           child: buildLocationButton(address.featureName),
+              //         ),
+              //         PopupMenuItem<String>(
+              //           value: 'delete',
+              //           child: buildLocationButton(address.subLocality),
+              //         ),
+              //         PopupMenuItem<String>(
+              //           value: 'delete',
+              //           child: buildLocationButton(address.locality),
+              //         ),
+              //         PopupMenuItem<String>(
+              //           value: 'delete',
+              //           child: buildLocationButton(address.subAdminArea),
+              //         ),
+              //         PopupMenuItem<String>(
+              //           value: 'delete',
+              //           child: buildLocationButton(address.adminArea),
+              //         ),
+              //         PopupMenuItem<String>(
+              //           value: 'delete',
+              //           child: buildLocationButton(address.countryName),
+              //         ),
+              //       ];
             },
           ),
         ),
@@ -236,30 +235,30 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     });
   }
 
-  getUserLocation() async {
-    LocationData currentLocation;
-    String error;
-    Location location = Location();
-    try {
-      currentLocation = await location.getLocation();
-    } catch (e) {
-      if (e.code == 'PERMISSION_DENIED') {
-        error = 'please grant permission';
-        print(error);
-      }
-      if (e.code == 'PERMISSION_DENIED_NEVER_ASK') {
-        error = 'permission denied- please enable it from app settings';
-        print(error);
-      }
-      currentLocation = null;
-    }
-    final coordinates =
-        Coordinates(currentLocation.latitude, currentLocation.longitude);
-    var addresses =
-        await Geocoder.local.findAddressesFromCoordinates(coordinates);
-    var first = addresses.first;
-    return first;
-  }
+  // getUserLocation() async {
+  //   LocationData currentLocation;
+  //   String error;
+  //   Location location = Location();
+  //   try {
+  //     currentLocation = await location.getLocation();
+  //   } catch (e) {
+  //     if (e.code == 'PERMISSION_DENIED') {
+  //       error = 'please grant permission';
+  //       print(error);
+  //     }
+  //     if (e.code == 'PERMISSION_DENIED_NEVER_ASK') {
+  //       error = 'permission denied- please enable it from app settings';
+  //       print(error);
+  //     }
+  //     currentLocation = null;
+  //   }
+  //   final coordinates =
+  //       Coordinates(currentLocation.latitude, currentLocation.longitude);
+  //   var addresses =
+  //       await Geocoder.local.findAddressesFromCoordinates(coordinates);
+  //   var first = addresses.first;
+  //   return first;
+  // }
 
   @override
   Widget build(BuildContext context) {

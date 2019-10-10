@@ -12,6 +12,7 @@ import '../login_page/login.dart';
 import '../login_page/profile.dart';
 import 'game.dart';
 import 'demo001.dart';
+import 'demo002.dart';
 
 String urlPath = DefaultConfig.urlPath;
 String socketPath = DefaultConfig.socketPath;
@@ -176,7 +177,7 @@ class HomePageState extends State<HomePage> {
             ),
             PopupMenuButton(
               // overflow menu
-              offset: Offset(0, -180),
+              offset: Offset(0, -200),
               color: Color(0xFFb853c0),
               icon: Icon(
                 Icons.more,
@@ -188,6 +189,12 @@ class HomePageState extends State<HomePage> {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
                       return RunBall();
+                    }));
+                    break;
+                  case 'demo002':
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return MapBox();
                     }));
                     break;
                   case 'file_download':
@@ -204,6 +211,11 @@ class HomePageState extends State<HomePage> {
                   PopupMenuItem<String>(
                     value: 'demo001',
                     child: Text('demo001',
+                        style: TextStyle(color: Colors.white54)),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'demo002',
+                    child: Text('demo002',
                         style: TextStyle(color: Colors.white54)),
                   ),
                   PopupMenuItem<String>(
