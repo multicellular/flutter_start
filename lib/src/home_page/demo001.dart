@@ -85,11 +85,10 @@ class _RunBallState extends State<RunBall> with SingleTickerProviderStateMixin {
   //渲染方法，更新状态
   //[3].渲染时批量更改信息
   _render() {
-    setState(() {
-      for (var i = 0; i < _balls.length; i++) {
-        updateBall(i);
-      }
-    });
+    for (var i = 0; i < _balls.length; i++) {
+      updateBall(i);
+    }
+    setState(() {});
   }
 
   void updateBall(int i) {

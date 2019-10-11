@@ -1,3 +1,4 @@
+import 'package:awesome_flutter/src/home_page/demo003.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -13,6 +14,7 @@ import '../login_page/profile.dart';
 import 'game.dart';
 import 'demo001.dart';
 import 'demo002.dart';
+import 'demo003.dart';
 
 String urlPath = DefaultConfig.urlPath;
 String socketPath = DefaultConfig.socketPath;
@@ -197,6 +199,12 @@ class HomePageState extends State<HomePage> {
                       return MapBox();
                     }));
                     break;
+                  case 'demo003':
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return UrlLauncher();
+                    }));
+                    break;
                   case 'file_download':
                     _initUpdate();
                     break;
@@ -210,12 +218,17 @@ class HomePageState extends State<HomePage> {
                 return [
                   PopupMenuItem<String>(
                     value: 'demo001',
-                    child: Text('demo001',
-                        style: TextStyle(color: Colors.white54)),
+                    child:
+                        Text('ball', style: TextStyle(color: Colors.white54)),
                   ),
                   PopupMenuItem<String>(
                     value: 'demo002',
-                    child: Text('demo002',
+                    child:
+                        Text('mapbox', style: TextStyle(color: Colors.white54)),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'demo003',
+                    child: Text('url_launcher',
                         style: TextStyle(color: Colors.white54)),
                   ),
                   PopupMenuItem<String>(

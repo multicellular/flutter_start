@@ -34,9 +34,7 @@ class MapBoxState extends State<MapBox> {
       }
       _currentLocation = null;
     }
-    setState(() {
-      // return _currentLocation;
-    });
+    setState(() {});
   }
 
   @override

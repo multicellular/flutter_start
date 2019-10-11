@@ -53,12 +53,13 @@ dependencies:
   # geocoder: ^0.1.2
   #获取地理坐标
   location: ^2.3.5
-  permission_handler: '^3.2.0'
-  # flutter_baidu_map: ^0.0.5
+  # permission_handler: '^3.2.0'
   flutter_map: any 
   flutter_downloader: ^1.1.7 
   #扫描二维码
   barcode_scan: ^0.0.4
+  #唤起其它应用
+  url_launcher: ^5.1.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
