@@ -7,12 +7,20 @@ class UrlLauncher extends StatefulWidget {
 }
 
 class UrlLauncherState extends State<UrlLauncher> {
+  String tip='';
   _goLauncher(String uri) async {
+    tip=uri;
     if (await canLaunch(uri)) {
+      // tip=uri;
       await launch(uri);
     } else {
+      // tip='error';
+      await launch(uri);
       throw 'Could not launch $uri';
     }
+    setState(() {
+      
+    });
   }
 
   @override
@@ -33,7 +41,8 @@ class UrlLauncherState extends State<UrlLauncher> {
                 Icons.touch_app,
               ),
               onPressed: () {
-                _goLauncher('weixin://dl/chat');
+                _goLauncher('weixin://');
+                // _goLauncher('vnd.youtube://');
               },
             ),
             RaisedButton.icon(
@@ -51,9 +60,10 @@ class UrlLauncherState extends State<UrlLauncher> {
                 Icons.touch_app,
               ),
               onPressed: () {
-                _goLauncher('tel:+86 13813808326');
+                _goLauncher('tel:13813808326');
               },
             ),
+            Text(tip)
           ],
         )));
   }
