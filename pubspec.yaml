@@ -36,7 +36,7 @@ dependencies:
   #loading图标
   flutter_spinkit: "^3.1.0"
   #网络图片缓存
-  cached_network_image: ^1.1.0
+  cached_network_image: ^1.1.2
   #图片压缩
   flutter_image_compress: ^0.6.3
   #web_socket
