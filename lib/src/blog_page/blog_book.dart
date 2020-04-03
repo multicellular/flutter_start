@@ -8,9 +8,7 @@ import '../models/config.dart';
 // import '../home_page/home.dart';
 // import '../chat_page/chat_book.dart';
 import '../component/dioHttp.dart';
-
 var urlPath = DefaultConfig.urlPath;
-
 class BlogPage extends KFDrawerContent {
   @override
   BlogPageState createState() => new BlogPageState();

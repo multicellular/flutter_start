@@ -30,13 +30,13 @@ dependencies:
   #本地存储
   shared_preferences: ^0.5.1+2
   #多张图片选择
-  multi_image_picker: ^4.3.6
+  multi_image_picker: ^4.6.0
   #文件选择
   file_picker: ^1.3.3
   #loading图标
   flutter_spinkit: "^3.1.0"
   #网络图片缓存
-  cached_network_image: ^1.1.2
+  cached_network_image: ^2.0.0-rc
   #图片压缩
   flutter_image_compress: ^0.6.3
   #web_socket
