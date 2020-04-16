@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:barcode_scan/barcode_scan.dart';
+// import 'package:barcode_scan/barcode_scan.dart';
 
 import '../component/event_bus.dart';
 import '../component/kf_drawer.dart';
@@ -71,29 +71,29 @@ class HomePageState extends State<HomePage> {
     await FlutterDownloader.loadTasks();
   }
 
-  Future scan() async {
-    try {
-      String barcode = await BarcodeScanner.scan();
-      setState(() {
-        return this.barcode = barcode;
-      });
-    } catch (e) {
-      if (e.code == BarcodeScanner.CameraAccessDenied) {
-        setState(() {
-          return this.barcode = 'The user did not grant the camera permission!';
-        });
-      } else {
-        setState(() {
-          return this.barcode = 'Unknown error: $e';
-        });
-      }
-    } on FormatException {
-      setState(() => this.barcode =
-          'null (User returned using the "back"-button before scanning anything. Result)');
-    } catch (e) {
-      setState(() => this.barcode = 'Unknown error: $e');
-    }
-  }
+  // Future scan() async {
+  //   try {
+  //     String barcode = await BarcodeScanner.scan();
+  //     setState(() {
+  //       return this.barcode = barcode;
+  //     });
+  //   } catch (e) {
+  //     if (e.code == BarcodeScanner.CameraAccessDenied) {
+  //       setState(() {
+  //         return this.barcode = 'The user did not grant the camera permission!';
+  //       });
+  //     } else {
+  //       setState(() {
+  //         return this.barcode = 'Unknown error: $e';
+  //       });
+  //     }
+  //   } on FormatException {
+  //     setState(() => this.barcode =
+  //         'null (User returned using the "back"-button before scanning anything. Result)');
+  //   } catch (e) {
+  //     setState(() => this.barcode = 'Unknown error: $e');
+  //   }
+  // }
 
   // Widget _buildMessage() {
   //   Widget widget = Container();
@@ -209,7 +209,7 @@ class HomePageState extends State<HomePage> {
                     _initUpdate();
                     break;
                   case 'scan':
-                    scan();
+                    // scan();
                     break;
                   default:
                 }

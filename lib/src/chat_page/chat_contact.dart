@@ -18,7 +18,6 @@ class ChatContactPage extends StatefulWidget {
 
 class ChatContactPageState extends State<ChatContactPage> {
   List<User> users = [];
-  List _searchUsers = [];
 
   _initUsers() async {
     var userRes =

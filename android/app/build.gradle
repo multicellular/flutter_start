@@ -21,7 +21,10 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+// apply plugin: 'kotlin-android'
+// apply plugin: 'kotlin'
 apply plugin: 'com.android.application'
+// apply plugin: 'kotlin-android-extensions'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 //找到你的key.properties文件内容
@@ -36,11 +39,13 @@ android {
     compileSdkVersion 28
     lintOptions {
         disable "InvalidPackage"
+        checkReleaseBuilds false
+        abortOnError false
     }
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.example.helloflutter"
+        applicationId "com.awesome.awesome_flutter"
         minSdkVersion 16
         multiDexEnabled true
         targetSdkVersion 28
@@ -68,9 +73,9 @@ android {
 flutter {
     source '../..'
 }
-
 dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
+    // implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
 }

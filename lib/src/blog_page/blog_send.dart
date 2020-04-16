@@ -53,7 +53,7 @@ class PostBlogDialogState extends State<PostBlogDialog> {
     } else {
       List _uploadFiles = [];
       for (var asset in _images) {
-        ByteData byteData = await asset.requestThumbnail(300, 300, quality: 60);
+        ByteData byteData = await asset.getThumbByteData(300, 300, quality: 60);
         List<int> imageData = byteData.buffer.asUint8List();
         _uploadFiles.add(new UploadFileInfo.fromBytes(imageData, 'blog.jpeg'));
       }
